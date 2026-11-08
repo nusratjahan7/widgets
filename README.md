@@ -43,8 +43,8 @@ Get the latest installers from
 | --- | --- |
 | Linux (Debian/Ubuntu/Mint) | [`.deb`](https://github.com/nusratjahan7/widgets/releases/latest/download/desktop-widgets_1.1.0_amd64.deb) |
 | Linux (any distro) | [`.AppImage`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.1.0.AppImage) |
-| Windows | [`.exe installer`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets%20Setup%201.1.0.exe) |
-| macOS | [`.dmg`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.1.0.dmg) |
+| Windows | [`.exe installer`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets.Setup.1.1.0.exe) |
+| macOS (Apple Silicon) | [`.dmg`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.1.0-arm64.dmg) |
 
 These links target the 1.1.0 assets; the [releases page](https://github.com/nusratjahan7/widgets/releases) always lists the newest builds. Releases are built automatically when a `v*` tag is pushed.
 
