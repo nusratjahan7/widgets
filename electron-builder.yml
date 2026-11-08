@@ -1,0 +1,23 @@
+appId: com.nusrat.desktopwidgets
+productName: Desktop Widgets
+copyright: Copyright © 2026
+directories:
+  output: release
+  buildResources: assets
+files:
+  - dist/**
+  - assets/**
+  - package.json
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Utility
+  icon: assets/icon.png
+  maintainer: Nusrat <nusrat@localhost>
+  synopsis: Home screen widgets for your desktop
+  syncDesktopName: true
+  desktop:
+    entry:
+      StartupWMClass: desktop-widgets
+      X-GNOME-Autostart-enabled: "false"

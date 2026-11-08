@@ -1,0 +1,245 @@
+import { app, ipcMain, nativeTheme } from 'electron';
+import { isHexColor, isRecord, isSizePreset } from '../shared/config/index.js';
+import { IPC } from '../shared/ipc.js';
+import type { ThemeSettings, WidgetUpdateResult } from '../shared/types.js';
+import { WIDGET_IDS, isWidgetId } from '../shared/widgets.js';
+import { applyAutostart } from './autolaunch.js';
+import { openCityEditor } from './cityEditor.js';
+import {
+  getSettings,
+  mergeWidgetConfig,
+  migrateSettings,
+  store,
+} from './settings.js';
+import { openSettings } from './settingsWindow.js';
+import { sampleSystemStats } from './systemStats.js';
+import { initTheme, setAccent, setThemeMode } from './theme.js';
+import { createTray, destroyTray, refreshTray } from './tray.js';
+import { ensureWeatherDefaults, getWeather, setWeatherCity } from './weather.js';
+import * as wm from './windowManager.js';
+
+const VALID_MODES: ThemeSettings['mode'][] = ['dark', 'light', 'system'];
+
+function isCoordinate(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function applySettingsPatch(raw: unknown): void {
+  if (!isRecord(raw)) return;
+
+  const theme = isRecord(raw.theme) ? raw.theme : null;
+  if (theme) {
+    if (typeof theme.mode === 'string' && VALID_MODES.includes(theme.mode as ThemeSettings['mode'])) {
+      setThemeMode(theme.mode as ThemeSettings['mode']);
+    }
+    if (isHexColor(theme.accent)) setAccent(theme.accent);
+  }
+
+  if (typeof raw.locked === 'boolean') {
+    store.set('locked', raw.locked);
+    wm.applyLocked(raw.locked);
+  }
+
+  if (typeof raw.autostart === 'boolean') {
+    store.set('autostart', raw.autostart);
+    applyAutostart(raw.autostart);
+  }
+
+  const weather = isRecord(raw.weather) ? raw.weather : null;
+  if (weather) {
+    const current = getSettings().weather;
+    store.set('weather', {
+      city: typeof weather.city === 'string' ? weather.city.slice(0, 120) : current.city,
+      latitude: isCoordinate(weather.latitude) ? weather.latitude : current.latitude,
+      longitude: isCoordinate(weather.longitude) ? weather.longitude : current.longitude,
+      units: weather.units === 'imperial' ? 'imperial' : weather.units === 'metric' ? 'metric' : current.units,
+    });
+  }
+
+  wm.broadcastContext();
+  wm.broadcastSnapshot();
+  refreshTray();
+}
+
+// Needed on some X11 drivers for per-pixel transparency.
+app.commandLine.appendSwitch('enable-transparent-visuals');
+
+function registerIpc(): void {
+  ipcMain.handle(IPC.context, (event) => {
+    const id = wm.widgetIdForWebContents(event.sender);
+    if (!id) throw new Error('Unknown widget window');
+    return wm.buildContext(id);
+  });
+
+  ipcMain.handle(IPC.statsGet, () => sampleSystemStats());
+
+  ipcMain.handle(IPC.weatherGet, () => getWeather());
+
+  ipcMain.handle(IPC.weatherSetCity, async (_event, city: unknown) => {
+    const trimmed = typeof city === 'string' ? city.trim() : '';
+    if (!trimmed) return { ok: false, error: 'Type a city name.' };
+
+    try {
+      const place = await setWeatherCity(trimmed);
+      if (!place) return { ok: false, error: `No match for “${trimmed}”.` };
+
+      wm.broadcast(IPC.weather, await getWeather(true));
+      refreshTray();
+      return { ok: true, name: place.name };
+    } catch (error) {
+      console.error('[ipc] city lookup failed', error);
+      return { ok: false, error: 'Lookup failed — check the connection.' };
+    }
+  });
+
+  ipcMain.handle(IPC.weatherOpenEditor, () => {
+    openCityEditor(getSettings().weather.city);
+  });
+
+  ipcMain.handle(IPC.appearanceGet, () => ({
+    theme: getSettings().theme,
+    resolvedTheme: nativeTheme.shouldUseDarkColors ? 'dark' : 'light',
+  }));
+
+  ipcMain.on(IPC.dragStart, (event, screenX: unknown, screenY: unknown) => {
+    const id = wm.widgetIdForWebContents(event.sender);
+    if (!id || !isCoordinate(screenX) || !isCoordinate(screenY)) return;
+    wm.beginDrag(id, screenX, screenY);
+  });
+
+  ipcMain.on(IPC.dragMove, (event, screenX: unknown, screenY: unknown) => {
+    const id = wm.widgetIdForWebContents(event.sender);
+    if (!id || !isCoordinate(screenX) || !isCoordinate(screenY)) return;
+    wm.updateDrag(id, screenX, screenY);
+  });
+
+  ipcMain.on(IPC.dragEnd, () => wm.endDrag());
+
+  ipcMain.handle(IPC.themeSet, (_event, patch: Partial<ThemeSettings>) => {
+    if (patch?.mode && VALID_MODES.includes(patch.mode)) setThemeMode(patch.mode);
+    if (typeof patch?.accent === 'string' && /^#[0-9a-f]{6}$/i.test(patch.accent)) setAccent(patch.accent);
+    refreshTray();
+  });
+
+  ipcMain.handle(IPC.settingsGet, () => wm.settingsSnapshot());
+
+  ipcMain.handle(IPC.settingsSet, (_event, patch: unknown) => {
+    applySettingsPatch(patch);
+    return wm.settingsSnapshot();
+  });
+
+  ipcMain.handle(IPC.settingsOpen, () => openSettings());
+
+  ipcMain.handle(IPC.widgetToggle, (_event, payload: unknown) => {
+    if (!isRecord(payload) || !isWidgetId(payload.id) || typeof payload.enabled !== 'boolean') {
+      throw new Error('Invalid widget toggle');
+    }
+    wm.setWidgetEnabled(payload.id, payload.enabled);
+    refreshTray();
+    return wm.settingsSnapshot();
+  });
+
+  ipcMain.handle(IPC.widgetUpdate, async (_event, payload: unknown): Promise<WidgetUpdateResult> => {
+    if (!isRecord(payload) || !isWidgetId(payload.id)) {
+      return { ok: false, error: 'Unknown widget.', snapshot: wm.settingsSnapshot() };
+    }
+
+    const id = payload.id;
+    const configPatch = isRecord(payload.config) ? payload.config : null;
+    let error: string | undefined;
+
+    if (configPatch) {
+      const merged = mergeWidgetConfig(id, configPatch);
+
+      // Weather is a single global source, so its fields update app-wide state.
+      if (id === 'weather') {
+        const current = getSettings().weather;
+        if (configPatch.units === 'metric' || configPatch.units === 'imperial') {
+          if (configPatch.units !== current.units) {
+            store.set('weather', { ...current, units: configPatch.units });
+            wm.broadcast(IPC.weather, await getWeather(true));
+          }
+        }
+
+        const city = typeof configPatch.city === 'string' ? configPatch.city.trim() : '';
+        if (city) {
+          const place = await setWeatherCity(city);
+          if (!place) error = `No match for “${city}”.`;
+          else {
+            wm.broadcast(IPC.weather, await getWeather(true));
+            refreshTray();
+          }
+        }
+      }
+
+      if ('size' in configPatch && isSizePreset(merged.size)) {
+        wm.applyWidgetSize(id, merged.size);
+      }
+
+      wm.applyWidgetConfig(id, merged);
+    }
+
+    if (isRecord(payload.size) && isCoordinate(payload.size.width) && isCoordinate(payload.size.height)) {
+      mergeWidgetConfig(id, { size: 'custom' });
+      wm.applyWidgetSize(id, 'custom', { width: payload.size.width, height: payload.size.height });
+    }
+
+    wm.broadcastContext();
+    wm.broadcastSnapshot();
+
+    return { ok: !error, error, snapshot: wm.settingsSnapshot() };
+  });
+
+  ipcMain.handle(IPC.widgetReset, (_event, payload: unknown) => {
+    const id = isRecord(payload) && isWidgetId(payload.id) ? payload.id : undefined;
+    wm.resetWidgets(id);
+    refreshTray();
+    return wm.settingsSnapshot();
+  });
+
+  ipcMain.handle(IPC.widgetReload, () => wm.reloadAll());
+
+  ipcMain.handle(IPC.widgetCapture, (_event, id: unknown) => (isWidgetId(id) ? wm.captureWidget(id) : null));
+}
+
+function startLoops(): void {
+  const pushStats = async () => wm.broadcast(IPC.stats, await sampleSystemStats());
+  void pushStats();
+  setInterval(pushStats, 1500);
+
+  const pushWeather = async () => {
+    const snapshot = await getWeather();
+    wm.broadcast(IPC.weather, snapshot);
+    // Retry quickly after a failed lookup; otherwise poll every 15 minutes.
+    setTimeout(pushWeather, snapshot ? 15 * 60 * 1000 : 60 * 1000);
+  };
+  void pushWeather();
+}
+
+function start(): void {
+  migrateSettings();
+  registerIpc();
+  initTheme();
+  ensureWeatherDefaults();
+  applyAutostart(getSettings().autostart);
+
+  for (const id of WIDGET_IDS) {
+    const state = getSettings().widgets[id];
+    if (!state || state.visible) wm.createWidget(id);
+  }
+
+  createTray();
+  startLoops();
+}
+
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => wm.showAll());
+
+  app.whenReady().then(start);
+
+  // Widgets may all be hidden; the tray keeps the app alive.
+  app.on('window-all-closed', () => {});
+  app.on('before-quit', destroyTray);
+}

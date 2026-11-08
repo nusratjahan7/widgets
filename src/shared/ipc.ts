@@ -1,0 +1,26 @@
+export const IPC = {
+  context: 'widget:context',
+  settings: 'settings:changed',
+  stats: 'stats:update',
+  statsGet: 'stats:get',
+  weather: 'weather:update',
+  weatherGet: 'weather:get',
+  weatherSetCity: 'weather:set-city',
+  weatherOpenEditor: 'weather:open-editor',
+  appearanceGet: 'appearance:get',
+  themeSet: 'theme:set',
+  dragStart: 'widget:drag-start',
+  dragMove: 'widget:drag-move',
+  dragEnd: 'widget:drag-end',
+  settingsGet: 'settings:get',
+  settingsSet: 'settings:set',
+  settingsSnapshot: 'settings:snapshot',
+  settingsOpen: 'settings:open',
+  widgetToggle: 'widget:toggle',
+  widgetUpdate: 'widget:update',
+  widgetReset: 'widget:reset',
+  widgetReload: 'widget:reload',
+  widgetCapture: 'widget:capture',
+} as const;
+
+export type IpcChannels = typeof IPC;
