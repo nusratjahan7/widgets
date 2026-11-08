@@ -1,8 +1,35 @@
+import { app } from 'electron';
 import Store from 'electron-store';
+import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
+import path from 'node:path';
 import { defaultConfig, sanitizeConfig } from '../shared/config/values.js';
 import { DEFAULT_SETTINGS, sanitizeSettings, sanitizeWidgetState } from '../shared/config/settings.js';
 import type { Settings, WidgetBounds, WidgetState } from '../shared/types.js';
 import { WIDGETS, type WidgetId } from '../shared/widgets.js';
+
+/**
+ * productName changed from "Desktop Widgets" to "Widgets", which moves the
+ * Electron userData directory. Copy the old settings over once so existing
+ * installs keep their widgets and options.
+ */
+function migrateLegacySettings(): void {
+  try {
+    const targetDir = app.getPath('userData');
+    const target = path.join(targetDir, 'settings.json');
+    if (existsSync(target)) return;
+
+    const legacy = path.join(app.getPath('appData'), 'Desktop Widgets', 'settings.json');
+    if (!existsSync(legacy)) return;
+
+    mkdirSync(targetDir, { recursive: true });
+    copyFileSync(legacy, target);
+    console.log('[settings] migrated settings from the previous userData directory');
+  } catch (error) {
+    console.warn('[settings] legacy settings migration skipped:', error);
+  }
+}
+
+migrateLegacySettings();
 
 export const store = new Store<Settings>({
   name: 'settings',

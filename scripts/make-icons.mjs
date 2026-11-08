@@ -5,7 +5,9 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const outDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'assets');
+const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
+const outDir = join(rootDir, 'assets');
+const buildDir = join(rootDir, 'build');
 
 const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
   let c = n;
@@ -135,10 +137,17 @@ function render(size, { background = false, layers }) {
 }
 
 mkdirSync(outDir, { recursive: true });
+mkdirSync(buildDir, { recursive: true });
 
 writeFileSync(
   join(outDir, 'icon.png'),
   render(512, { background: true, layers: [{ color: [255, 255, 255] }] }),
+);
+
+// electron-builder auto-detects build/icon.png and derives .ico/.icns from it.
+writeFileSync(
+  join(buildDir, 'icon.png'),
+  render(1024, { background: true, layers: [{ color: [255, 255, 255] }] }),
 );
 
 // Tray: light mark over a dark halo so it stays legible on light and dark panels.
@@ -152,4 +161,4 @@ writeFileSync(
   }),
 );
 
-console.log('icons written to assets/');
+console.log('icons written to assets/ and build/');

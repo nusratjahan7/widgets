@@ -1,20 +1,84 @@
-# Desktop Widgets
+# Widgets
 
 Frameless, transparent home-screen widgets that sit **on the desktop layer** — above the wallpaper, below every normal window. Built with Electron + Vite + React + Tailwind CSS (TypeScript).
 
-Targets **Linux X11** (developed and verified on Linux Mint / Cinnamon). The desktop-layer approach relies on `_NET_WM_WINDOW_TYPE_DESKTOP`, which Wayland does not expose.
+The desktop-layer pinning is implemented for **Linux X11** (developed and verified on Linux Mint / Cinnamon) via EWMH hints. Windows and macOS builds are provided, but that specific below-every-window behavior is X11-only.
 
 ## Widgets
 
 | Widget | Source | Notes |
 | --- | --- | --- |
-| Clock | `src/renderer/widgets/Clock` | 24h time, seconds, weekday + date, accent rule |
+| Clock | `src/renderer/widgets/Clock` | 24h/12h time, seconds, weekday + date, accent rule |
 | Date card | `src/renderer/widgets/DateCard` | Violet gradient, inset hairline, outlined `MMDD` numerals, script weekday |
 | Calendar | `src/renderer/widgets/Calendar` | Letter-spaced `S M T W T F S`, current week bright, today inverted |
 | System | `src/renderer/widgets/SystemStats` | Frosted card, arc mark, CPU / RAM / SSD readouts |
 | Weather | `src/renderer/widgets/Weather` | Open-Meteo (no API key), current temp, condition, high/low |
 
-## Run
+Every widget can be shown/hidden, resized, recolored, and customized from the **Settings window** (tray → Settings…, or the gear on hover).
+
+## Screenshots
+
+_Screenshots will be added here._
+
+| Clock | Calendar | Weather |
+| --- | --- | --- |
+| _placeholder_ | _placeholder_ | _placeholder_ |
+
+## Download
+
+Get the latest installers from
+**[github.com/nusratjahan7/widgets/releases](https://github.com/nusratjahan7/widgets/releases/latest)**.
+
+| OS | Download |
+| --- | --- |
+| Linux (Debian/Ubuntu/Mint) | [`.deb`](https://github.com/nusratjahan7/widgets/releases/latest/download/desktop-widgets_1.0.0_amd64.deb) |
+| Linux (any distro) | [`.AppImage`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.0.0.AppImage) |
+| Windows | [`.exe installer`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets%20Setup%201.0.0.exe) |
+| macOS | [`.dmg`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.0.0.dmg) |
+
+These links target the 1.0.0 assets; the [releases page](https://github.com/nusratjahan7/widgets/releases) always lists the newest builds. Releases are built automatically when a `v*` tag is pushed.
+
+## Install
+
+### Linux — `.deb`
+
+```bash
+sudo apt install ./desktop-widgets_1.0.0_amd64.deb
+```
+
+Launch **Widgets** from your app menu (or run `/opt/Widgets/desktop-widgets`). Uninstall with `sudo apt remove desktop-widgets`.
+
+### Linux — AppImage
+
+```bash
+chmod +x Widgets-1.0.0.AppImage
+./Widgets-1.0.0.AppImage
+```
+
+If your distro lacks FUSE, run `./Widgets-1.0.0.AppImage --appimage-extract-and-run`.
+
+**Requirements:** X11 (not Wayland) and `wmctrl` for the desktop layer:
+
+```bash
+sudo apt install wmctrl
+```
+
+### Windows
+
+Run the downloaded `.exe` installer. The build is **unsigned**, so Windows SmartScreen may warn:
+click **More info → Run anyway**.
+
+### macOS
+
+Open the `.dmg`, drag **Widgets** into Applications. The build is **unsigned**, so macOS may block it:
+right-click the app → **Open**, or allow it in **System Settings → Privacy & Security → Open Anyway**.
+If needed, clear quarantine:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Widgets.app
+```
+
+## Build from source
 
 ```bash
 npm install
@@ -27,9 +91,11 @@ Other scripts:
 npm run build      # icons + main (tsc) + renderer (vite)
 npm start          # run the production build
 npm run typecheck  # main + renderer
-npm run dist       # AppImage + .deb into release/
-npm run icons      # regenerate assets/icon.png and assets/tray.png
+npm run dist       # installers for the current OS into release/
+npm run icons      # regenerate assets/icon.png, assets/tray.png, build/icon.png
 ```
+
+`npm run dist` builds AppImage + `.deb` on Linux, an NSIS installer on Windows, and a `.dmg` on macOS. Pushing a `v*` tag publishes all three through the workflow in `.github/workflows/release.yml`.
 
 Tray icon → click to show/hide all widgets. Right-click for the menu:
 

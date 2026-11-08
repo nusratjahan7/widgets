@@ -1,14 +1,21 @@
 {
   "name": "desktop-widgets",
-  "productName": "Desktop Widgets",
-  "version": "0.1.0",
+  "productName": "Widgets",
+  "version": "1.0.0",
   "private": true,
-  "description": "Always-on-desktop home screen widgets",
+  "description": "Frameless desktop widgets for the X11 desktop layer: clock, date, calendar, system stats, and weather.",
   "author": {
     "name": "Nusrat",
     "email": "nusrat@localhost"
   },
-  "homepage": "https://localhost/desktop-widgets",
+  "homepage": "https://github.com/nusratjahan7/widgets",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nusratjahan7/widgets.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nusratjahan7/widgets/issues"
+  },
   "desktopName": "desktop-widgets.desktop",
   "type": "module",
   "main": "dist/main/index.js",
@@ -20,7 +27,7 @@
     "typecheck": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.json --noEmit",
     "icons": "node scripts/make-icons.mjs",
     "start": "electron .",
-    "dist": "npm run build && electron-builder",
+    "dist": "npm run build && electron-builder --publish never",
     "postinstall": "node scripts/make-icons.mjs"
   },
   "dependencies": {
@@ -39,5 +46,49 @@
     "tailwindcss": "^4.3.5",
     "typescript": "^5.9.3",
     "vite": "^8.3.6"
+  },
+  "build": {
+    "appId": "com.nusrat.widgets",
+    "productName": "Widgets",
+    "copyright": "Copyright © 2026 Nusrat",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**",
+      "assets/**",
+      "package.json"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility",
+      "maintainer": "Nusrat <nusrat@localhost>",
+      "synopsis": "Home screen widgets for your desktop",
+      "desktop": {
+        "entry": {
+          "StartupWMClass": "widgets",
+          "X-GNOME-Autostart-enabled": "false"
+        }
+      }
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.utilities"
+    }
   }
 }
