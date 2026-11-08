@@ -103,6 +103,8 @@ npm run icons      # regenerate assets/icon.png, assets/tray.png, build/icon.png
 
 `npm run dist` builds AppImage + `.deb` on Linux, an NSIS installer on Windows, and a `.dmg` on macOS. Pushing a `v*` tag publishes all three through `.github/workflows/release.yml`.
 
+Packaging uses the Electron binary installed by `npm ci` (`electronDist: node_modules/electron/dist`), so `electron-builder` does not re-download Electron and the build stays reproducible/offline-friendly.
+
 ## Tray and dock
 
 - The tray icon shows a menu with **Open Settings**, **Show / Hide widgets**, and **Quit**. Left-clicking the tray icon opens Settings.
