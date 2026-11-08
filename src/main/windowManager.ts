@@ -5,7 +5,6 @@ import { defaultWidgetState } from '../shared/config/settings.js';
 import { IPC } from '../shared/ipc.js';
 import type { SettingsSnapshot, WidgetBounds, WidgetContext, WidgetState } from '../shared/types.js';
 import { WIDGETS, WIDGET_IDS, type WidgetDefinition, type WidgetId } from '../shared/widgets.js';
-import { applyBelowLayer, belowLayerAvailable } from './belowLayer.js';
 import { debounce } from './debounce.js';
 import { DEV_SERVER_URL, PRELOAD_PATH, RENDERER_DIR } from './paths.js';
 import { getSettingsWindow } from './settingsWindow.js';
@@ -117,7 +116,6 @@ function nextSpawnBounds(definition: WidgetDefinition): WidgetBounds {
 function applyDesktopLayer(win: BrowserWindow): void {
   if (win.isDestroyed()) return;
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
-  applyBelowLayer(win);
 }
 
 export function createWidget(id: WidgetId): BrowserWindow {
@@ -148,9 +146,7 @@ export function createWidget(id: WidgetId): BrowserWindow {
     skipTaskbar: true,
     acceptFirstMouse: true,
     show: false,
-    // Without wmctrl we cannot pin windows below the stack, so fall back to the
-    // desktop window type (layered correctly, but not interactive).
-    ...(LINUX && !belowLayerAvailable() ? { type: 'desktop' as const } : {}),
+    ...(LINUX ? { type: 'desktop' as const } : {}),
     webPreferences: {
       preload: PRELOAD_PATH,
       contextIsolation: true,

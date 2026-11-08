@@ -60,6 +60,12 @@
       "assets/**",
       "package.json"
     ],
+    "extraResources": [
+      {
+        "from": "assets/tray.png",
+        "to": "tray.png"
+      }
+    ],
     "linux": {
       "target": [
         "AppImage",
@@ -77,6 +83,20 @@
           "X-GNOME-Autostart-enabled": "false"
         }
       }
+    },
+    "deb": {
+      "depends": [
+        "libgtk-3-0",
+        "libnotify4",
+        "libnss3",
+        "libxss1",
+        "libxtst6",
+        "xdg-utils",
+        "libatspi2.0-0",
+        "libuuid1",
+        "libsecret-1-0",
+        "libayatana-appindicator3-1"
+      ]
     },
     "win": {
       "target": [

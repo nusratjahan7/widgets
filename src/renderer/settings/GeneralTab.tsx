@@ -7,7 +7,7 @@ interface GeneralTabProps {
 }
 
 export function GeneralTab({ snapshot, controller }: GeneralTabProps) {
-  const { autostart, locked, showInDock } = snapshot.settings;
+  const { autostart, locked, keepDockIcon } = snapshot.settings;
 
   return (
     <>
@@ -40,17 +40,20 @@ export function GeneralTab({ snapshot, controller }: GeneralTabProps) {
         <div className="settings-field">
           <div className="settings-field-head">
             <div>
-              <span className="settings-label">Show in dock/taskbar</span>
-              <p className="settings-help">Keep an app entry in the panel while it runs. Closing Settings minimizes it.</p>
+              <span className="settings-label">Keep a dock icon while Settings is closed</span>
+              <p className="settings-help">
+                Adds a tiny invisible placeholder window so the panel keeps an app entry. It may also show up in
+                Alt+Tab and task switchers. Off by default — use the tray icon to reopen Settings.
+              </p>
             </div>
             <button
               type="button"
               className="settings-switch"
               role="switch"
-              aria-checked={showInDock}
-              aria-label="Show in dock/taskbar"
-              data-on={showInDock}
-              onClick={() => void controller.setSettings({ showInDock: !showInDock })}
+              aria-checked={keepDockIcon}
+              aria-label="Keep a dock icon while Settings is closed"
+              data-on={keepDockIcon}
+              onClick={() => void controller.setSettings({ keepDockIcon: !keepDockIcon })}
             />
           </div>
         </div>

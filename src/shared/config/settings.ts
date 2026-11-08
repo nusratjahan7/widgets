@@ -6,7 +6,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: { mode: 'dark', accent: '#8b7ed6' },
   locked: false,
   autostart: false,
-  showInDock: true,
+  keepDockIcon: false,
   weather: { city: '', latitude: null, longitude: null, units: 'metric' },
   widgets: {},
 };
@@ -57,7 +57,7 @@ export function sanitizeSettings(raw: unknown): Settings {
     },
     locked: source.locked === true,
     autostart: source.autostart === true,
-    showInDock: source.showInDock !== false,
+    keepDockIcon: source.keepDockIcon === true,
     weather: {
       city: typeof weather.city === 'string' ? weather.city.trim().slice(0, 120) : '',
       latitude: finite(weather.latitude) ? weather.latitude : null,

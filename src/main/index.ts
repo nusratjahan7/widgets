@@ -11,7 +11,8 @@ import {
   migrateSettings,
   store,
 } from './settings.js';
-import { applyShowInDock, initSettingsDock, openSettings } from './settingsWindow.js';
+import { openSettings } from './settingsWindow.js';
+import { applyDockIcon, destroyDockIcon } from './dockIcon.js';
 import { markQuitting } from './appState.js';
 import { deleteReminder, listReminders, saveReminder } from './reminders.js';
 import { openReminderEditor } from './reminderEditor.js';
@@ -49,9 +50,9 @@ function applySettingsPatch(raw: unknown): void {
     applyAutostart(raw.autostart);
   }
 
-  if (typeof raw.showInDock === 'boolean') {
-    store.set('showInDock', raw.showInDock);
-    applyShowInDock(raw.showInDock);
+  if (typeof raw.keepDockIcon === 'boolean') {
+    store.set('keepDockIcon', raw.keepDockIcon);
+    applyDockIcon(raw.keepDockIcon);
   }
 
   const weather = isRecord(raw.weather) ? raw.weather : null;
@@ -258,7 +259,7 @@ function start(): void {
   powerMonitor.on('resume', () => wm.broadcast(IPC.resume, Date.now()));
 
   createTray();
-  initSettingsDock();
+  applyDockIcon(getSettings().keepDockIcon);
   startLoops();
   startReminderScheduler();
 }
@@ -275,6 +276,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('activate', () => openSettings());
   app.on('before-quit', () => {
     markQuitting();
+    destroyDockIcon();
     destroyTray();
   });
 }

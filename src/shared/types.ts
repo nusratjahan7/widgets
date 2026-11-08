@@ -33,7 +33,7 @@ export type Settings = {
   theme: ThemeSettings;
   locked: boolean;
   autostart: boolean;
-  showInDock: boolean;
+  keepDockIcon: boolean;
   weather: WeatherSettings;
   widgets: Partial<Record<WidgetId, WidgetState>>;
 };
@@ -103,7 +103,7 @@ export interface SettingsPatch {
   theme?: Partial<ThemeSettings>;
   locked?: boolean;
   autostart?: boolean;
-  showInDock?: boolean;
+  keepDockIcon?: boolean;
   weather?: Partial<WeatherSettings>;
 }
 
