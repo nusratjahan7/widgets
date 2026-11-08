@@ -25,9 +25,12 @@ export function CalendarWidget() {
 
   const currentWeek = Math.floor((firstWeekday + today - 1) / 7);
   const weekdays = mondayFirst ? MONDAY_FIRST : SUNDAY_FIRST;
+  const monthLabel = now.toLocaleDateString('en-US', { month: 'long' });
 
   return (
-    <WidgetFrame className="calendar-card flex flex-col justify-center gap-[2.6cqw] px-[6cqw] py-[6.5cqw]">
+    <WidgetFrame className="calendar-card flex flex-col justify-center gap-[2.2cqw] px-[6cqw] py-[6.5cqw]">
+      <span className="calendar-month">{monthLabel}</span>
+
       <div className="grid grid-cols-7">
         {weekdays.map((label, index) => (
           <span key={index} className="calendar-head">

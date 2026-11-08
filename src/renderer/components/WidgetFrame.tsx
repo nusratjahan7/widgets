@@ -6,6 +6,7 @@ interface WidgetFrameProps {
   children: ReactNode;
   className?: string;
   onActivate?: () => void;
+  style?: CSSProperties;
 }
 
 const INTERACTIVE = 'button, input, a, [data-no-drag]';
@@ -27,7 +28,7 @@ function Gear() {
   );
 }
 
-export function WidgetFrame({ children, className = '', onActivate }: WidgetFrameProps) {
+export function WidgetFrame({ children, className = '', onActivate, style: extraStyle }: WidgetFrameProps) {
   const { context } = useWidgetContext();
   const start = useRef<{ x: number; y: number } | null>(null);
   const pending = useRef<{ x: number; y: number } | null>(null);
@@ -44,6 +45,7 @@ export function WidgetFrame({ children, className = '', onActivate }: WidgetFram
   const background = typeof config.background === 'string' ? config.background : 'auto';
 
   const style = {
+    ...extraStyle,
     ...(accent ? { '--accent': accent } : {}),
     ...(textColor ? { '--fg': textColor } : {}),
     '--widget-opacity': String(opacity),

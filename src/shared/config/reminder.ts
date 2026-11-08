@@ -13,6 +13,14 @@ export const reminderConfig: WidgetConfigSchema = {
         { value: 'glass', label: 'Glass' },
       ],
     },
+    {
+      key: 'backgroundColor',
+      label: 'Background color',
+      description: 'Used when Background is Widget default. Auto follows the theme.',
+      type: 'color',
+      default: 'auto',
+      allowAuto: true,
+    },
     { key: 'weekdayColor', label: 'Weekday color', type: 'color', default: '#ff2d55' },
     { key: 'defaultReminderColor', label: 'Default reminder color', type: 'color', default: '#34c759' },
     {
