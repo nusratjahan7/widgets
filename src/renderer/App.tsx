@@ -4,6 +4,7 @@ import { WidgetProvider } from './state/WidgetProvider';
 import { CalendarWidget } from './widgets/Calendar/CalendarWidget';
 import { ClockWidget } from './widgets/Clock/ClockWidget';
 import { DateCardWidget } from './widgets/DateCard/DateCardWidget';
+import { ReminderWidget } from './widgets/Reminder/ReminderWidget';
 import { SystemStatsWidget } from './widgets/SystemStats/SystemStatsWidget';
 import { WeatherWidget } from './widgets/Weather/WeatherWidget';
 
@@ -13,6 +14,7 @@ const RENDERERS: Record<WidgetId, ComponentType> = {
   calendar: CalendarWidget,
   systemStats: SystemStatsWidget,
   weather: WeatherWidget,
+  reminder: ReminderWidget,
 };
 
 export function App() {

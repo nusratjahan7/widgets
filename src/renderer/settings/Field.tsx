@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ColorField, ConfigField, ConfigValue, NumberField, TextField } from '../../shared/config/types';
+import { SelectControl } from './SelectControl';
 
 interface FieldProps {
   field: ConfigField;
@@ -60,13 +61,12 @@ function SelectField({ field, value, onChange }: FieldProps) {
         <Label label={field.label} description={field.description} />
       </div>
       <div className="settings-controls">
-        <select className="settings-select" value={current} onChange={(event) => onChange(event.target.value)}>
-          {field.options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <SelectControl
+          value={current}
+          options={field.options}
+          ariaLabel={field.label}
+          onChange={onChange}
+        />
       </div>
     </div>
   );

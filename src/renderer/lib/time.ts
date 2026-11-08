@@ -14,6 +14,21 @@ export function shortDate(date: Date): string {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+export type ShortDateFormat = 'month-day' | 'day-month' | 'numeric';
+
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+
+export function formatShortDate(date: Date, format: ShortDateFormat): string {
+  const day = date.getDate();
+  const month = SHORT_MONTHS[date.getMonth()];
+
+  if (format === 'numeric') {
+    return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
+  if (format === 'day-month') return `${day} ${month}`;
+  return `${month} ${day}`;
+}
+
 export interface TimeParts {
   hours: string;
   minutes: string;

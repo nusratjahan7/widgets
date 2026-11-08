@@ -1,6 +1,5 @@
 import { app, Menu, Tray, nativeImage, type MenuItemConstructorOptions } from 'electron';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { ThemeMode } from '../shared/types.js';
 import { WIDGETS, WIDGET_IDS } from '../shared/widgets.js';
 import { applyAutostart } from './autolaunch.js';
@@ -9,7 +8,7 @@ import { openSettings } from './settingsWindow.js';
 import { ACCENTS, ACCENT_NAMES, setAccent, setThemeMode } from './theme.js';
 import * as wm from './windowManager.js';
 
-const TRAY_ICON = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'assets', 'tray.png');
+const TRAY_ICON = path.join(app.getAppPath(), 'assets', 'tray.png');
 
 const THEME_MODES: { mode: ThemeMode; label: string }[] = [
   { mode: 'dark', label: 'Dark' },
@@ -92,11 +91,19 @@ function buildMenu(): Menu {
 export function createTray(): void {
   if (tray) return;
 
-  const image = nativeImage.createFromPath(TRAY_ICON).resize({ width: 24, height: 24 });
-  tray = new Tray(image);
-  tray.setToolTip('Desktop Widgets');
-  tray.setContextMenu(buildMenu());
-  tray.on('click', () => wm.toggleAll());
+  try {
+    const image = nativeImage.createFromPath(TRAY_ICON);
+    if (image.isEmpty()) throw new Error(`Tray icon not found at ${TRAY_ICON}`);
+
+    const next = new Tray(image.resize({ width: 24, height: 24 }));
+    next.setToolTip('Desktop Widgets');
+    next.setContextMenu(buildMenu());
+    next.on('click', () => openSettings());
+    tray = next;
+  } catch (error) {
+    tray = null;
+    console.warn('[tray] unavailable; Settings stays reachable from the dock:', error);
+  }
 }
 
 export function refreshTray(): void {

@@ -7,7 +7,7 @@ interface GeneralTabProps {
 }
 
 export function GeneralTab({ snapshot, controller }: GeneralTabProps) {
-  const { autostart, locked } = snapshot.settings;
+  const { autostart, locked, showInDock } = snapshot.settings;
 
   return (
     <>
@@ -40,6 +40,24 @@ export function GeneralTab({ snapshot, controller }: GeneralTabProps) {
         <div className="settings-field">
           <div className="settings-field-head">
             <div>
+              <span className="settings-label">Show in dock/taskbar</span>
+              <p className="settings-help">Keep an app entry in the panel while it runs. Closing Settings minimizes it.</p>
+            </div>
+            <button
+              type="button"
+              className="settings-switch"
+              role="switch"
+              aria-checked={showInDock}
+              aria-label="Show in dock/taskbar"
+              data-on={showInDock}
+              onClick={() => void controller.setSettings({ showInDock: !showInDock })}
+            />
+          </div>
+        </div>
+
+        <div className="settings-field">
+          <div className="settings-field-head">
+            <div>
               <span className="settings-label">Lock all positions</span>
               <p className="settings-help">Disables dragging and resizing for every widget.</p>
             </div>
@@ -63,6 +81,22 @@ export function GeneralTab({ snapshot, controller }: GeneralTabProps) {
             </div>
             <button type="button" className="settings-btn" onClick={() => void window.widgets.reloadWidgets()}>
               Reload
+            </button>
+          </div>
+        </div>
+
+        <div className="settings-field">
+          <div className="settings-field-head">
+            <div>
+              <span className="settings-label">Quit Desktop Widgets</span>
+              <p className="settings-help">Stop the app and remove every widget from the desktop.</p>
+            </div>
+            <button
+              type="button"
+              className="settings-btn settings-btn-danger"
+              onClick={() => void window.widgets.quitApp()}
+            >
+              Quit
             </button>
           </div>
         </div>

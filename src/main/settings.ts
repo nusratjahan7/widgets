@@ -41,6 +41,12 @@ export const store = new Store<Settings>({
 export function migrateSettings(): void {
   const current = store.store;
   const next = sanitizeSettings(current);
+
+  const dateCard = next.widgets.dateCard;
+  if (dateCard && dateCard.width === 320 && dateCard.height === 400) {
+    next.widgets.dateCard = { ...dateCard, height: 320 };
+  }
+
   if (JSON.stringify(current) !== JSON.stringify(next)) store.store = next;
 }
 

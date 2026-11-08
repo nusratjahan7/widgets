@@ -20,6 +20,7 @@ export default defineConfig({
         widget: fileURLToPath(new URL('./src/renderer/widget.html', import.meta.url)),
         editor: fileURLToPath(new URL('./src/renderer/editor.html', import.meta.url)),
         settings: fileURLToPath(new URL('./src/renderer/settings.html', import.meta.url)),
+        reminder: fileURLToPath(new URL('./src/renderer/reminder.html', import.meta.url)),
       },
     },
   },

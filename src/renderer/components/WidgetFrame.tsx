@@ -4,6 +4,7 @@ import { useWidgetContext } from '../state/WidgetProvider';
 interface WidgetFrameProps {
   children: ReactNode;
   className?: string;
+  onActivate?: () => void;
 }
 
 const INTERACTIVE = 'button, input, a, [data-no-drag]';
@@ -23,10 +24,11 @@ function Gear() {
   );
 }
 
-export function WidgetFrame({ children, className = '' }: WidgetFrameProps) {
+export function WidgetFrame({ children, className = '', onActivate }: WidgetFrameProps) {
   const { context } = useWidgetContext();
   const start = useRef<{ x: number; y: number } | null>(null);
   const pending = useRef<{ x: number; y: number } | null>(null);
+  const tap = useRef<{ x: number; y: number } | null>(null);
   const frame = useRef<number | null>(null);
 
   const config = context.config;
@@ -51,8 +53,11 @@ export function WidgetFrame({ children, className = '' }: WidgetFrameProps) {
   }
 
   function onPointerDown(event: PointerEvent<HTMLDivElement>) {
-    if (context.locked || event.button !== 0) return;
+    if (event.button !== 0) return;
     if ((event.target as HTMLElement).closest(INTERACTIVE)) return;
+
+    tap.current = { x: event.screenX, y: event.screenY };
+    if (context.locked) return;
 
     event.currentTarget.setPointerCapture(event.pointerId);
     start.current = { x: event.screenX, y: event.screenY };
@@ -66,6 +71,16 @@ export function WidgetFrame({ children, className = '' }: WidgetFrameProps) {
   }
 
   function onPointerEnd(event: PointerEvent<HTMLDivElement>) {
+    const tapStart = tap.current;
+    tap.current = null;
+    if (
+      tapStart &&
+      event.type === 'pointerup' &&
+      Math.hypot(event.screenX - tapStart.x, event.screenY - tapStart.y) < 4
+    ) {
+      onActivate?.();
+    }
+
     if (!start.current) return;
     start.current = null;
     pending.current = null;

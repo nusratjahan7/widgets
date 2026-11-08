@@ -33,9 +33,27 @@ export type Settings = {
   theme: ThemeSettings;
   locked: boolean;
   autostart: boolean;
+  showInDock: boolean;
   weather: WeatherSettings;
   widgets: Partial<Record<WidgetId, WidgetState>>;
 };
+
+export type ReminderRepeat = 'none' | 'daily' | 'weekly' | 'monthly';
+
+export interface Reminder {
+  id: string;
+  title: string;
+  date: string;
+  start: string;
+  end?: string;
+  color: string;
+  repeat: ReminderRepeat;
+  leadMinutes?: number;
+}
+
+export interface ReminderDraft extends Omit<Reminder, 'id'> {
+  id?: string;
+}
 
 export interface SystemStats {
   cpu: number;
@@ -85,6 +103,7 @@ export interface SettingsPatch {
   theme?: Partial<ThemeSettings>;
   locked?: boolean;
   autostart?: boolean;
+  showInDock?: boolean;
   weather?: Partial<WeatherSettings>;
 }
 
@@ -104,9 +123,15 @@ export interface WidgetUpdateResult {
 export interface WidgetApi {
   getContext(): Promise<WidgetContext>;
   onSettings(callback: (context: WidgetContext) => void): () => void;
+  onResume(callback: (at: number) => void): () => void;
   onStats(callback: (stats: SystemStats) => void): () => void;
   getStats(): Promise<SystemStats>;
   onWeather(callback: (snapshot: WeatherSnapshot | null) => void): () => void;
+  getReminders(): Promise<Reminder[]>;
+  onReminders(callback: (reminders: Reminder[]) => void): () => void;
+  saveReminder(draft: ReminderDraft): Promise<Reminder[]>;
+  deleteReminder(id: string): Promise<Reminder[]>;
+  openReminderEditor(): Promise<void>;
   getWeather(): Promise<WeatherSnapshot | null>;
   setWeatherCity(city: string): Promise<CityResult>;
   openCityEditor(): Promise<void>;
@@ -125,4 +150,5 @@ export interface WidgetApi {
   reloadWidgets(): Promise<void>;
   captureWidget(id: WidgetId): Promise<string | null>;
   openSettings(): Promise<void>;
+  quitApp(): Promise<void>;
 }

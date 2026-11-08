@@ -1,4 +1,4 @@
-import { app, ipcMain, nativeTheme } from 'electron';
+import { app, ipcMain, nativeTheme, powerMonitor } from 'electron';
 import { isHexColor, isRecord, isSizePreset } from '../shared/config/index.js';
 import { IPC } from '../shared/ipc.js';
 import type { ThemeSettings, WidgetUpdateResult } from '../shared/types.js';
@@ -11,7 +11,11 @@ import {
   migrateSettings,
   store,
 } from './settings.js';
-import { openSettings } from './settingsWindow.js';
+import { applyShowInDock, initSettingsDock, openSettings } from './settingsWindow.js';
+import { markQuitting } from './appState.js';
+import { deleteReminder, listReminders, saveReminder } from './reminders.js';
+import { openReminderEditor } from './reminderEditor.js';
+import { checkReminders, startReminderScheduler } from './reminderScheduler.js';
 import { sampleSystemStats } from './systemStats.js';
 import { initTheme, setAccent, setThemeMode } from './theme.js';
 import { createTray, destroyTray, refreshTray } from './tray.js';
@@ -43,6 +47,11 @@ function applySettingsPatch(raw: unknown): void {
   if (typeof raw.autostart === 'boolean') {
     store.set('autostart', raw.autostart);
     applyAutostart(raw.autostart);
+  }
+
+  if (typeof raw.showInDock === 'boolean') {
+    store.set('showInDock', raw.showInDock);
+    applyShowInDock(raw.showInDock);
   }
 
   const weather = isRecord(raw.weather) ? raw.weather : null;
@@ -96,6 +105,22 @@ function registerIpc(): void {
     openCityEditor(getSettings().weather.city);
   });
 
+  ipcMain.handle(IPC.remindersGet, () => listReminders());
+
+  ipcMain.handle(IPC.remindersSave, (_event, draft: unknown) => {
+    const next = saveReminder(draft);
+    checkReminders();
+    return next;
+  });
+
+  ipcMain.handle(IPC.remindersDelete, (_event, id: unknown) => {
+    const next = deleteReminder(id);
+    checkReminders();
+    return next;
+  });
+
+  ipcMain.handle(IPC.remindersOpenEditor, () => openReminderEditor());
+
   ipcMain.handle(IPC.appearanceGet, () => ({
     theme: getSettings().theme,
     resolvedTheme: nativeTheme.shouldUseDarkColors ? 'dark' : 'light',
@@ -129,6 +154,8 @@ function registerIpc(): void {
   });
 
   ipcMain.handle(IPC.settingsOpen, () => openSettings());
+
+  ipcMain.handle(IPC.appQuit, () => app.quit());
 
   ipcMain.handle(IPC.widgetToggle, (_event, payload: unknown) => {
     if (!isRecord(payload) || !isWidgetId(payload.id) || typeof payload.enabled !== 'boolean') {
@@ -228,18 +255,26 @@ function start(): void {
     if (!state || state.visible) wm.createWidget(id);
   }
 
+  powerMonitor.on('resume', () => wm.broadcast(IPC.resume, Date.now()));
+
   createTray();
+  initSettingsDock();
   startLoops();
+  startReminderScheduler();
 }
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on('second-instance', () => wm.showAll());
+  app.on('second-instance', () => openSettings());
 
   app.whenReady().then(start);
 
   // Widgets may all be hidden; the tray keeps the app alive.
   app.on('window-all-closed', () => {});
-  app.on('before-quit', destroyTray);
+  app.on('activate', () => openSettings());
+  app.on('before-quit', () => {
+    markQuitting();
+    destroyTray();
+  });
 }

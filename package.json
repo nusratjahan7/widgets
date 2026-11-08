@@ -70,7 +70,10 @@
       "synopsis": "Home screen widgets for your desktop",
       "desktop": {
         "entry": {
-          "StartupWMClass": "widgets",
+          "Name": "Widgets",
+          "Comment": "Home screen widgets for the desktop",
+          "Icon": "desktop-widgets",
+          "StartupWMClass": "desktop-widgets",
           "X-GNOME-Autostart-enabled": "false"
         }
       }

@@ -1,5 +1,53 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Bebas Neue";
+  src: url("./fonts/BebasNeue-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Anton";
+  src: url("./fonts/Anton-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Oswald";
+  src: url("./fonts/Oswald-Variable.woff2") format("woff2");
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Pacifico";
+  src: url("./fonts/Pacifico-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Dancing Script";
+  src: url("./fonts/DancingScript-Variable.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("./fonts/Inter-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --font-sans: "Noto Sans", "DejaVu Sans", system-ui, sans-serif;
   --font-mono: "DejaVu Sans Mono", "Noto Sans Mono", ui-monospace, monospace;
@@ -249,76 +297,164 @@
 
   /* Date card */
   .card.date-card {
-    background:
-      radial-gradient(120% 90% at 20% -10%, #d6c8f7 0%, #ad99e9 36%, #8369d3 66%, #57419f 100%);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.32),
+      0 18px 44px rgba(0, 0, 0, 0.3);
     color: #ffffff;
   }
 
-  .date-card::after {
+  .dc-root {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    overflow: hidden;
+  }
+
+  .dc-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: var(--dc-bg-opacity, 0.55);
+    background: radial-gradient(130% 100% at 26% -6%, #f1e9ff 0%, #cebbf7 30%, #a98fe6 62%, #7d63c8 100%);
+    backdrop-filter: blur(var(--dc-blur, 18px)) saturate(1.2);
+    -webkit-backdrop-filter: blur(var(--dc-blur, 18px)) saturate(1.2);
+  }
+
+  .dc-bg::after {
     content: "";
     position: absolute;
-    inset: 40% -35% -45%;
-    background: radial-gradient(closest-side, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0));
-    filter: blur(28px);
+    inset: -22% 32% 42% -32%;
+    background: radial-gradient(closest-side, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0));
     pointer-events: none;
   }
 
-  .date-inset {
+  .dc-bg[data-gradient="blue"] {
+    background: radial-gradient(120% 90% at 20% -10%, #dce9ff 0%, #9db8f2 36%, #5f7fd6 68%, #34457f 100%);
+  }
+
+  .dc-bg[data-gradient="pink"] {
+    background: radial-gradient(120% 90% at 20% -10%, #ffe1f1 0%, #f0b0d6 36%, #cf7ab4 68%, #7e3f74 100%);
+  }
+
+  .dc-bg[data-gradient="sunset"] {
+    background: radial-gradient(120% 90% at 20% -10%, #ffe6c7 0%, #ffb38a 34%, #e57a86 64%, #7c3f72 100%);
+  }
+
+  .dc-bg[data-gradient="dark"] {
+    background: radial-gradient(120% 90% at 20% -10%, #444653 0%, #2c2d36 42%, #1c1d24 74%, #121319 100%);
+  }
+
+  .dc-inset {
     position: absolute;
     inset: 4.5%;
-    border: 1.5px solid rgba(255, 255, 255, 0.38);
-    border-radius: 22px;
+    border: 1.5px solid rgba(255, 255, 255, 0.32);
+    border-radius: max(10px, calc(var(--widget-radius, 26px) * 0.82));
+    pointer-events: none;
   }
 
-  .date-time {
+  .dc-face {
     position: absolute;
-    top: 5%;
-    right: 7%;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8%;
+  }
+
+  .dc-corner {
+    position: absolute;
+    top: 7%;
+    right: max(13%, 40px);
     font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.16em;
-    color: rgba(255, 255, 255, 0.82);
+    font-size: clamp(7px, 2.6cqw, 10px);
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.66);
   }
 
-  .date-numerals {
+  .dc-numerals {
     position: absolute;
-    right: 3%;
-    bottom: 24%;
-    font-family: var(--font-sans);
-    font-weight: 900;
-    font-size: 64cqw;
-    line-height: 0.72;
-    letter-spacing: -0.02em;
-    white-space: nowrap;
-    color: rgba(255, 255, 255, 0.12);
-    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.8);
-    transform: scaleX(0.54);
-    transform-origin: right center;
-  }
-
-  .date-script {
-    position: absolute;
-    left: 4%;
+    left: 50%;
     top: 46%;
-    font-family: var(--font-script);
-    font-size: 15.5cqw;
+    transform: translate(-50%, -50%);
+    font-family: var(--dc-numeral-font, "Bebas Neue", sans-serif);
+    font-size: 56cqw;
+    font-weight: 400;
+    line-height: 0.8;
+    letter-spacing: 0.01em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--dc-fill, rgba(255, 255, 255, 0.12));
+    -webkit-text-stroke: var(--dc-stroke, 2px) var(--dc-stroke-color, rgba(255, 255, 255, 0.9));
+    text-shadow: 0 0 22px rgba(255, 255, 255, 0.22);
+  }
+
+  .dc-numerals[data-font="oswald"] {
+    font-size: 50cqw;
+  }
+
+  .dc-numerals[data-font="anton"] {
+    font-size: 46cqw;
+  }
+
+  .dc-numerals[data-len="5"][data-font="bebas"] {
+    font-size: 46cqw;
+  }
+
+  .dc-numerals[data-len="5"][data-font="oswald"] {
+    font-size: 41cqw;
+  }
+
+  .dc-numerals[data-len="5"][data-font="anton"] {
+    font-size: 38cqw;
+  }
+
+  .dc-colon {
+    margin: 0 0.03em;
+  }
+
+  .dc-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 10%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.4cqw;
+    animation: dc-caption-in 620ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .dc-weekday {
+    font-family: var(--dc-script-font, "Pacifico", cursive);
+    font-size: 15cqw;
     line-height: 1;
     white-space: nowrap;
     color: #ffffff;
-    transform: rotate(-4deg);
-    text-shadow: 0 2px 18px rgba(64, 32, 118, 0.35);
+    transform: rotate(-4.5deg);
+    text-shadow:
+      0 2px 16px rgba(255, 255, 255, 0.32),
+      0 0 26px rgba(120, 90, 200, 0.42);
   }
 
-  .date-label {
-    position: absolute;
-    left: 7%;
-    bottom: 8%;
+  .dc-date {
     font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
+    font-size: clamp(8px, 3.2cqw, 11px);
+    letter-spacing: 0.12em;
     color: rgba(255, 255, 255, 0.82);
+  }
+
+  @keyframes dc-caption-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Weather */
@@ -411,6 +547,106 @@
     text-transform: none;
     letter-spacing: 0.04em;
     color: #ff9b7a;
+  }
+
+  /* Reminder */
+  .card.reminder-card {
+    font-family: "Inter", var(--font-sans);
+    color: var(--reminder-fg, #0f1a33);
+    border-color: rgba(15, 26, 51, 0.05);
+    box-shadow: 0 14px 34px rgba(16, 24, 40, 0.14);
+  }
+
+  .reminder-weekday {
+    color: var(--reminder-weekday, #ff2d55);
+    font-size: clamp(13px, 6.6cqw, 26px);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .reminder-month {
+    color: var(--reminder-muted, #8b93a7);
+    font-size: clamp(13px, 6.6cqw, 26px);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .reminder-day {
+    margin-top: 1.2cqw;
+    color: var(--reminder-fg, #0f1a33);
+    font-size: clamp(38px, 22cqw, 92px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.035em;
+  }
+
+  .reminder-item {
+    animation: reminder-in 380ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .reminder-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--reminder-fg, #0f1a33);
+    font-size: clamp(12px, 4.8cqw, 18px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .reminder-time {
+    color: var(--reminder-muted, #8b93a7);
+    font-size: clamp(10px, 4cqw, 15px);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .reminder-empty-title {
+    color: var(--reminder-fg, #0f1a33);
+    font-size: clamp(12px, 4.6cqw, 17px);
+    font-weight: 600;
+  }
+
+  .reminder-empty-hint {
+    color: var(--reminder-muted, #8b93a7);
+    font-size: clamp(10px, 3.8cqw, 14px);
+  }
+
+  @keyframes reminder-in {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .card.reminder-card.reminder-theme-light {
+    --reminder-fg: #0f1a33;
+    --reminder-muted: #8b93a7;
+    background: #ffffff;
+    border-color: rgba(15, 26, 51, 0.05);
+  }
+
+  .card.reminder-card.reminder-theme-dark {
+    --reminder-fg: #f4f4f6;
+    --reminder-muted: rgba(244, 244, 246, 0.55);
+    background: #1b1c21;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.35);
+  }
+
+  .card.reminder-card.reminder-theme-glass {
+    --reminder-fg: #ffffff;
+    --reminder-muted: rgba(255, 255, 255, 0.65);
+    background: color-mix(in srgb, #10131a 52%, transparent);
+    border-color: rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(20px) saturate(1.2);
+    -webkit-backdrop-filter: blur(20px) saturate(1.2);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      0 16px 38px rgba(0, 0, 0, 0.2);
   }
 
   /* Background modes (after widget-specific looks so they win on tie) */
@@ -634,6 +870,74 @@
     width: 96px;
   }
 
+  .settings-select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .settings-select-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .settings-select-chevron {
+    flex: none;
+    width: 10px;
+    height: 6px;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+
+  .settings-select[data-open="true"] {
+    border-color: var(--accent);
+  }
+
+  .settings-select[data-open="true"] .settings-select-chevron {
+    transform: rotate(180deg);
+  }
+
+  .settings-select-menu {
+    position: fixed;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 4px;
+    max-height: 260px;
+    overflow-y: auto;
+    border: 1px solid var(--panel-border);
+    border-radius: 9px;
+    background: var(--panel);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  }
+
+  .settings-select-option {
+    width: 100%;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--fg);
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .settings-select-option[data-active="true"] {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+
+  .settings-select-option[aria-selected="true"] {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
   .settings-range {
     width: 100%;
     accent-color: var(--accent);
@@ -771,5 +1075,126 @@
     font-family: var(--font-mono);
     font-size: 11px;
     color: var(--muted);
+  }
+
+  /* Reminder editor */
+  .reminder-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .reminder-editor-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .reminder-editor-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .reminder-editor-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .reminder-editor-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    background: var(--input-bg);
+  }
+
+  .reminder-editor-row[data-active="true"] {
+    border-color: var(--accent);
+  }
+
+  .reminder-editor-pick {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex: 1;
+    min-width: 0;
+    padding: 2px;
+    border: 0;
+    background: transparent;
+    color: var(--fg);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .reminder-editor-dot {
+    flex: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+
+  .reminder-editor-title {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .reminder-editor-meta {
+    display: block;
+    margin-top: 2px;
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+
+  .reminder-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .reminder-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .reminder-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .reminder-form-error {
+    margin: 0;
+    font-size: 11.5px;
+    color: #ff9b7a;
+  }
+
+  .reminder-color {
+    width: 100%;
+    height: 33px;
+    padding: 0 4px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--input-bg);
+    cursor: pointer;
   }
 }

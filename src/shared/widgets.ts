@@ -2,11 +2,12 @@ import { calendarConfig } from './config/calendar.js';
 import { clockConfig } from './config/clock.js';
 import { cosmeticFields } from './config/common.js';
 import { dateCardConfig } from './config/dateCard.js';
+import { reminderConfig } from './config/reminder.js';
 import { systemStatsConfig } from './config/systemStats.js';
 import type { WidgetConfigSchema } from './config/types.js';
 import { weatherConfig } from './config/weather.js';
 
-export const WIDGET_IDS = ['clock', 'dateCard', 'calendar', 'systemStats', 'weather'] as const;
+export const WIDGET_IDS = ['clock', 'dateCard', 'calendar', 'systemStats', 'weather', 'reminder'] as const;
 
 export type WidgetId = (typeof WIDGET_IDS)[number];
 
@@ -39,7 +40,7 @@ export const WIDGETS: Record<WidgetId, WidgetDefinition> = {
     clockConfig,
   ),
   dateCard: withConfig(
-    { id: 'dateCard', title: 'Date', width: 320, height: 400, minWidth: 240, minHeight: 320 },
+    { id: 'dateCard', title: 'Date', width: 320, height: 320, minWidth: 200, minHeight: 200 },
     dateCardConfig,
   ),
   calendar: withConfig(
@@ -53,6 +54,10 @@ export const WIDGETS: Record<WidgetId, WidgetDefinition> = {
   weather: withConfig(
     { id: 'weather', title: 'Weather', width: 280, height: 190, minWidth: 220, minHeight: 150 },
     weatherConfig,
+  ),
+  reminder: withConfig(
+    { id: 'reminder', title: 'Reminders', width: 320, height: 320, minWidth: 240, minHeight: 240 },
+    reminderConfig,
   ),
 };
 
