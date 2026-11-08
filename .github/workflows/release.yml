@@ -12,6 +12,8 @@ jobs:
   release:
     name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    env:
+      ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
     strategy:
       fail-fast: false
       matrix:
