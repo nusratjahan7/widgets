@@ -3,7 +3,7 @@ import path from 'node:path';
 import { defaultConfig, sizeForPreset, type SizePreset } from '../shared/config/index.js';
 import { defaultWidgetState } from '../shared/config/settings.js';
 import { IPC } from '../shared/ipc.js';
-import type { SettingsSnapshot, WidgetBounds, WidgetContext, WidgetState } from '../shared/types.js';
+import type { ResizeEdge, SettingsSnapshot, WidgetBounds, WidgetContext, WidgetState } from '../shared/types.js';
 import { WIDGETS, WIDGET_IDS, type WidgetDefinition, type WidgetId } from '../shared/widgets.js';
 import { debounce } from './debounce.js';
 import { DEV_SERVER_URL, PRELOAD_PATH, RENDERER_DIR } from './paths.js';
@@ -11,6 +11,7 @@ import { getSettingsWindow } from './settingsWindow.js';
 import {
   getSettings,
   getWidgetConfig,
+  mergeWidgetConfig,
   patchWidgetState,
   readWidgetState,
   setWidgetVisible as persistVisible,
@@ -187,7 +188,7 @@ export function createWidget(id: WidgetId): BrowserWindow {
   const handleGeometry = () => {
     if (!settled) return;
     // A move under fractional scaling can emit a spurious resize; don't record it.
-    if (drag?.id === id) return;
+    if (drag?.id === id || resizeState?.id === id) return;
     dirty = true;
     persist();
   };
@@ -425,6 +426,93 @@ export function endDrag(): void {
     width: finished.size.width,
     height: finished.size.height,
   });
+}
+
+const RESIZE_EDGES: readonly ResizeEdge[] = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
+
+interface ResizeState {
+  id: WidgetId;
+  edge: ResizeEdge;
+  origin: WidgetBounds;
+  start: { x: number; y: number };
+  last: WidgetBounds;
+}
+
+let resizeState: ResizeState | null = null;
+
+export function beginResize(id: WidgetId, edge: string, screenX: number, screenY: number): void {
+  if (!(RESIZE_EDGES as readonly string[]).includes(edge)) return;
+
+  const win = windows.get(id);
+  if (!win || win.isDestroyed()) return;
+
+  const config = getWidgetConfig(id);
+  if (getSettings().locked || config.locked === true) return;
+
+  const [x, y] = win.getPosition();
+  const stored = readWidgetState(id);
+  const live = win.getBounds();
+  const origin: WidgetBounds = {
+    x,
+    y,
+    width: stored?.width ?? live.width,
+    height: stored?.height ?? live.height,
+  };
+
+  resizeState = {
+    id,
+    edge: edge as ResizeEdge,
+    origin,
+    start: { x: screenX, y: screenY },
+    last: origin,
+  };
+}
+
+export function updateResize(screenX: number, screenY: number): void {
+  const state = resizeState;
+  if (!state) return;
+
+  const win = windows.get(state.id);
+  if (!win || win.isDestroyed()) return;
+
+  const definition = WIDGETS[state.id];
+  const dx = Math.round(screenX - state.start.x);
+  const dy = Math.round(screenY - state.start.y);
+  let { x, y, width, height } = state.origin;
+
+  if (state.edge.includes('e')) width += dx;
+  if (state.edge.includes('s')) height += dy;
+  if (state.edge.includes('w')) {
+    width -= dx;
+    x += dx;
+  }
+  if (state.edge.includes('n')) {
+    height -= dy;
+    y += dy;
+  }
+
+  if (width < definition.minWidth) {
+    if (state.edge.includes('w')) x -= definition.minWidth - width;
+    width = definition.minWidth;
+  }
+  if (height < definition.minHeight) {
+    if (state.edge.includes('n')) y -= definition.minHeight - height;
+    height = definition.minHeight;
+  }
+
+  const bounds = clampToDisplay({ x, y, width, height });
+  state.last = bounds;
+  win.setBounds(bounds);
+}
+
+export function endResize(): void {
+  const finished = resizeState;
+  resizeState = null;
+  if (!finished) return;
+
+  patchWidgetState(finished.id, finished.last);
+  mergeWidgetConfig(finished.id, { size: 'custom' });
+  broadcastSnapshot();
 }
 
 export function reloadAll(): void {

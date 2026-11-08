@@ -106,7 +106,7 @@ export function GeneralTab({ snapshot, controller }: GeneralTabProps) {
 
         <div className="settings-field">
           <span className="settings-label">Settings file</span>
-          <p className="settings-help">Stored in ~/.config/Desktop Widgets/settings.json</p>
+          <p className="settings-help">Stored in ~/.config/Widgets/settings.json</p>
         </div>
       </div>
     </>

@@ -1,9 +1,9 @@
 {
   "name": "desktop-widgets",
   "productName": "Widgets",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "Frameless desktop widgets for the X11 desktop layer: clock, date, calendar, system stats, and weather.",
+  "description": "Frameless X11 desktop widgets: clock, date, calendar, system stats, weather, and reminders.",
   "author": {
     "name": "Nusrat",
     "email": "nusrat@localhost"

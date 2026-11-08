@@ -38,6 +38,8 @@ export type Settings = {
   widgets: Partial<Record<WidgetId, WidgetState>>;
 };
 
+export type ResizeEdge = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+
 export type ReminderRepeat = 'none' | 'daily' | 'weekly' | 'monthly';
 
 export interface Reminder {
@@ -140,6 +142,9 @@ export interface WidgetApi {
   startDrag(screenX: number, screenY: number): void;
   dragTo(screenX: number, screenY: number): void;
   endDrag(): void;
+  startResize(edge: ResizeEdge, screenX: number, screenY: number): void;
+  resizeTo(screenX: number, screenY: number): void;
+  endResize(): void;
 
   getSettings(): Promise<SettingsSnapshot>;
   setSettings(patch: SettingsPatch): Promise<SettingsSnapshot>;

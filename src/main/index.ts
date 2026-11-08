@@ -141,6 +141,20 @@ function registerIpc(): void {
 
   ipcMain.on(IPC.dragEnd, () => wm.endDrag());
 
+  ipcMain.on(IPC.resizeStart, (event, edge: unknown, screenX: unknown, screenY: unknown) => {
+    const id = wm.widgetIdForWebContents(event.sender);
+    if (!id || typeof edge !== 'string' || !isCoordinate(screenX) || !isCoordinate(screenY)) return;
+    wm.beginResize(id, edge, screenX, screenY);
+  });
+
+  ipcMain.on(IPC.resizeMove, (event, screenX: unknown, screenY: unknown) => {
+    if (!wm.widgetIdForWebContents(event.sender)) return;
+    if (!isCoordinate(screenX) || !isCoordinate(screenY)) return;
+    wm.updateResize(screenX, screenY);
+  });
+
+  ipcMain.on(IPC.resizeEnd, () => wm.endResize());
+
   ipcMain.handle(IPC.themeSet, (_event, patch: Partial<ThemeSettings>) => {
     if (patch?.mode && VALID_MODES.includes(patch.mode)) setThemeMode(patch.mode);
     if (typeof patch?.accent === 'string' && /^#[0-9a-f]{6}$/i.test(patch.accent)) setAccent(patch.accent);

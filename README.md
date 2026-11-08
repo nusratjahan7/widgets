@@ -2,19 +2,29 @@
 
 Frameless, transparent home-screen widgets that sit **on the desktop layer** — above the wallpaper, below every normal window. Built with Electron + Vite + React + Tailwind CSS (TypeScript).
 
-The desktop-layer pinning is implemented for **Linux X11** (developed and verified on Linux Mint / Cinnamon) via EWMH hints. Windows and macOS builds are provided, but that specific below-every-window behavior is X11-only.
+On Linux the widgets are real desktop windows (`_NET_WM_WINDOW_TYPE_DESKTOP`), so Cinnamon's Scale/Expo overviews and Alt+Tab leave them alone while they remain clickable, draggable, and resizable. They are **not** listed in the taskbar and stay visible on every workspace. Windows and macOS builds use regular frameless windows.
+
+## Features
+
+- Six widgets: clock, typographic date card, calendar, system stats, weather, and reminders.
+- Drag to move; drag any edge or corner to resize (independently of the WM), with a per-widget or global lock.
+- Live Settings window with a generic schema renderer, per-widget live previews, themes, accent colors, and sizes.
+- Tray icon and single-instance launcher so Settings is always reachable.
+- Reminder editor popover with repeating events and desktop notifications.
+- Locally bundled fonts (Bebas Neue, Anton, Oswald, Pacifico, Dancing Script, Inter) — works offline.
 
 ## Widgets
 
 | Widget | Source | Notes |
 | --- | --- | --- |
 | Clock | `src/renderer/widgets/Clock` | 24h/12h time, seconds, weekday + date, accent rule |
-| Date card | `src/renderer/widgets/DateCard` | Violet gradient, inset hairline, outlined `MMDD` numerals, script weekday |
+| Date card | `src/renderer/widgets/DateCard` | Frosted gradient card, hollow time numerals, script weekday, short date |
 | Calendar | `src/renderer/widgets/Calendar` | Letter-spaced `S M T W T F S`, current week bright, today inverted |
 | System | `src/renderer/widgets/SystemStats` | Frosted card, arc mark, CPU / RAM / SSD readouts |
 | Weather | `src/renderer/widgets/Weather` | Open-Meteo (no API key), current temp, condition, high/low |
+| Reminders | `src/renderer/widgets/Reminder` | Weekday/month header, big day number, next reminders with colored bars and times |
 
-Every widget can be shown/hidden, resized, recolored, and customized from the **Settings window** (tray → Settings…, or the gear on hover).
+Every widget can be shown/hidden, moved, resized, recolored, and customized from the **Settings window** (tray → Open Settings, or the gear on hover).
 
 ## Screenshots
 
@@ -27,41 +37,37 @@ _Screenshots will be added here._
 ## Download
 
 Get the latest installers from
-**[github.com/nusratjahan7/widgets/releases](https://github.com/nusratjahan7/widgets/releases/latest)**.
+**[github.com/nusratjahan7/widgets/releases/latest](https://github.com/nusratjahan7/widgets/releases/latest)**.
 
 | OS | Download |
 | --- | --- |
-| Linux (Debian/Ubuntu/Mint) | [`.deb`](https://github.com/nusratjahan7/widgets/releases/latest/download/desktop-widgets_1.0.0_amd64.deb) |
-| Linux (any distro) | [`.AppImage`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.0.0.AppImage) |
-| Windows | [`.exe installer`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets%20Setup%201.0.0.exe) |
-| macOS | [`.dmg`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.0.0.dmg) |
+| Linux (Debian/Ubuntu/Mint) | [`.deb`](https://github.com/nusratjahan7/widgets/releases/latest/download/desktop-widgets_1.1.0_amd64.deb) |
+| Linux (any distro) | [`.AppImage`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.1.0.AppImage) |
+| Windows | [`.exe installer`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets%20Setup%201.1.0.exe) |
+| macOS | [`.dmg`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.1.0.dmg) |
 
-These links target the 1.0.0 assets; the [releases page](https://github.com/nusratjahan7/widgets/releases) always lists the newest builds. Releases are built automatically when a `v*` tag is pushed.
+These links target the 1.1.0 assets; the [releases page](https://github.com/nusratjahan7/widgets/releases) always lists the newest builds. Releases are built automatically when a `v*` tag is pushed.
 
 ## Install
 
 ### Linux — `.deb`
 
 ```bash
-sudo apt install ./desktop-widgets_1.0.0_amd64.deb
+sudo apt install ./desktop-widgets_1.1.0_amd64.deb
 ```
 
-Launch **Widgets** from your app menu (or run `/opt/Widgets/desktop-widgets`). Uninstall with `sudo apt remove desktop-widgets`.
+The package depends on `libayatana-appindicator3-1` (tray integration), along with the usual Electron libraries. Launch **Widgets** from your app menu (or run `/opt/Widgets/desktop-widgets`). Uninstall with `sudo apt remove desktop-widgets`.
 
 ### Linux — AppImage
 
 ```bash
-chmod +x Widgets-1.0.0.AppImage
-./Widgets-1.0.0.AppImage
+chmod +x Widgets-1.1.0.AppImage
+./Widgets-1.1.0.AppImage
 ```
 
-If your distro lacks FUSE, run `./Widgets-1.0.0.AppImage --appimage-extract-and-run`.
+If your distro lacks FUSE, run `./Widgets-1.1.0.AppImage --appimage-extract-and-run`.
 
-**Requirements:** X11 (not Wayland) and `wmctrl` for the desktop layer:
-
-```bash
-sudo apt install wmctrl
-```
+**Requirements:** Linux X11 (not Wayland) for the true desktop layer. No `wmctrl` or other helper is needed.
 
 ### Windows
 
@@ -95,29 +101,24 @@ npm run dist       # installers for the current OS into release/
 npm run icons      # regenerate assets/icon.png, assets/tray.png, build/icon.png
 ```
 
-`npm run dist` builds AppImage + `.deb` on Linux, an NSIS installer on Windows, and a `.dmg` on macOS. Pushing a `v*` tag publishes all three through the workflow in `.github/workflows/release.yml`.
+`npm run dist` builds AppImage + `.deb` on Linux, an NSIS installer on Windows, and a `.dmg` on macOS. Pushing a `v*` tag publishes all three through `.github/workflows/release.yml`.
 
-Tray icon → click to show/hide all widgets. Right-click for the menu:
+## Tray and dock
 
-- Settings… (`Ctrl+,`)
-- Show / hide widgets
-- Widgets ▸ (per-widget visibility; checking a hidden one recreates it)
-- Lock position
-- Theme ▸ Dark / Light / Follow system
-- Accent ▸ six presets
-- Start at login
-- Reload widgets
-- Quit
+- The tray icon shows a menu with **Open Settings**, **Show / Hide widgets**, and **Quit**. Left-clicking the tray icon opens Settings.
+- Closing the Settings window hides it; the app keeps running with the widgets. Reopen it from the tray, by launching the app again (single-instance), or by clicking the pinned dock icon.
+- **Keep a dock icon while Settings is closed** (Settings → General, off by default) creates a tiny transparent minimized window so the panel keeps an app entry. It may also appear in Alt+Tab/task switchers.
+- Quit only from the tray menu or **Settings → General → Quit**.
 
 ## Settings window
 
-A normal framed window, opened from the tray (**Settings…**) or from the gear that appears on each widget on hover. It has three tabs:
+A normal framed window, opened from the tray or from the gear on each widget on hover. It has three tabs:
 
 - **Widgets** — every registered widget with a show/hide switch (closes/creates its window immediately), a live preview captured from the real window, and **Customize**. **Reset to default** restores each widget's options and size, keeping visibility and position.
 - **Appearance** — theme mode and the six accent presets.
-- **General** — start at login, lock all positions, reload widgets.
+- **General** — start at login, keep-dock-icon placeholder, lock all positions, reload widgets, quit, settings file location.
 
-Each widget exposes a **config schema** (`src/shared/config/*.ts`) of fields with types, ranges, and defaults. The Settings UI renders those fields automatically, so a new widget needs no settings code — add its schema to the registry and it appears.
+Each widget exposes a **config schema** (`src/shared/config/*.ts`) of fields with types, ranges, and defaults. The Settings UI renders those fields automatically, so a new widget needs no settings code — add its schema to the registry and it appears. Dropdowns are a custom themed control so native menu colors cannot break the dark UI.
 
 Common per-widget options: size (small/medium/large/custom), opacity, background (widget default/solid/glass/transparent), accent color, text color, corner radius, and a per-widget lock.
 
@@ -126,12 +127,21 @@ Widget-specific options:
 | Widget | Options |
 | --- | --- |
 | Clock | 12/24h, show seconds, show date, time zone |
-| Date card | show time, 12/24h |
+| Date card | show time, 12/24h, show weekday, show short date, date format, outline thickness, fill opacity, gradient preset, background opacity, blur, numeral font, script font |
 | Calendar | week starts Sunday/Monday |
 | System | show CPU / RAM / SSD |
 | Weather | city, units (changing these updates the app-wide weather) |
+| Reminders | theme (light/dark/glass), weekday color, default reminder color, reminders shown (1–3), 12/24h, notifications, default lead time |
 
-> **Glass note:** transparent X11 windows cannot sample the desktop behind them, so "glass" is a translucent tinted surface rather than a true backdrop blur.
+> **Glass note:** transparent X11 windows cannot reliably sample the desktop behind them, so "glass" is a translucent tinted surface rather than a true backdrop blur.
+
+## Reminders
+
+- Click the Reminders widget (not the gear) to open a focusable popover for adding, editing, and deleting reminders.
+- Each reminder has a title, date, start/end time, color, repeat (none / daily / weekly / monthly), and an optional lead-time override.
+- The widget shows today's upcoming (or currently ongoing) reminders, sorted by time, limited by **Reminders shown**.
+- A main-process scheduler checks every 20 seconds, after edits, and on system resume. It sends an Electron notification at `start − lead` (per-reminder override, otherwise the default from Settings).
+- Notifications require the app to be running. Events older than the 60-second grace window are not replayed after a restart.
 
 ## Architecture
 
@@ -139,13 +149,19 @@ Widget-specific options:
 src/
   shared/          widget registry (ids + default sizes), settings types, IPC channels
     config/        per-widget config schemas + validation/defaults
+    reminders.ts   occurrence/repeat math shared by widget and scheduler
     palette.ts     accent presets shared by tray and Settings
   main/
-    index.ts       app lifecycle, IPC handlers, stats/weather loops
-    windowManager.ts  creates/clamps/persists widget windows, desktop layer, broadcasts
-    settingsWindow.ts  the framed Settings BrowserWindow
-    tray.ts        tray icon + menu
+    index.ts       app lifecycle, IPC handlers, stats/weather/reminder loops
+    windowManager.ts  creates/clamps/persists widget windows, desktop layer, drag/resize, broadcasts
+    settingsWindow.ts  the framed Settings BrowserWindow (hide on close)
+    tray.ts        tray icon + menu (packaged icon from resources/tray.png)
+    dockIcon.ts    optional 1×1 placeholder window for dock presence
+    appState.ts    quit flag used by the Settings close handler
     settings.ts    electron-store schema, migration/validation, widget-state helpers
+    reminders.ts   separate electron-store (reminders.json), CRUD + broadcast
+    reminderScheduler.ts  desktop notifications, resume/restart safe
+    reminderEditor.ts     popover editor window anchored to the widget
     autolaunch.ts  XDG autostart entry (~/.config/autostart)
     theme.ts       theme mode/accent, nativeTheme sync
     systemStats.ts CPU delta sampling, /proc/meminfo, statfs
@@ -156,12 +172,15 @@ src/
   renderer/
     widget.html    one entry, rendered per `?widget=<id>`
     editor.html    city popover entry
+    reminder.html  reminder editor popover entry
     settings.html  Settings window entry
     App.tsx        widget id → component map
-    settings/      Settings UI (sidebar, tabs, generic field renderer)
+    settings/      Settings UI (sidebar, tabs, generic field renderer, SelectControl)
     state/         WidgetProvider: context + stats/weather subscriptions, theme tokens
-    components/     WidgetFrame (drag region, gear, live style), Mark (brand glyph)
+    hooks/         useNow, useMinuteClock (minute/midnight + resume)
+    components/    WidgetFrame (drag, resize handles, gear, tap-to-open, live style), Mark
     widgets/<Name>/ one folder per widget
+    fonts/         bundled WOFF2 fonts + OFL licenses
     styles.css     theme tokens + component styles (Tailwind v4)
 ```
 
@@ -175,44 +194,45 @@ Each widget is its own `BrowserWindow` created from the registry in `src/shared/
 4. Register it in the `RENDERERS` map in `src/renderer/App.tsx`.
 5. If it needs data, add a main-process source and push it over IPC (see `systemStats.ts` + `IPC.stats`).
 
-The Settings window, validation, and live updates work automatically for the new schema.
+The Settings window, validation, live updates, tray entries, and previews work automatically for the new schema.
 
 ## How the desktop layer works
 
-Widgets are ordinary frameless windows pinned to the bottom of the stack with the EWMH `_NET_WM_STATE_BELOW` hint, plus `skipTaskbar` and `setVisibleOnAllWorkspaces`. Electron cannot set that hint itself, so `src/main/belowLayer.ts` applies it through **wmctrl** (`wmctrl -i -r <id> -b add,below`).
+On Linux, widget windows are created with `type: 'desktop'`, which sets `_NET_WM_WINDOW_TYPE_DESKTOP`. Muffin/Cinnamon then:
 
-Why not `type: 'desktop'`? On Cinnamon/Muffin a `_NET_WM_WINDOW_TYPE_DESKTOP` window is input-transparent: pointer events pass straight through, so widgets could not be clicked or dragged. Normal windows below the stack keep full input while still sitting behind every app window.
+- keeps them below normal windows,
+- excludes them from Scale/Expo and Alt+Tab,
+- keeps them off the taskbar (`skipTaskbar`), and
+- shows them on every workspace via `setVisibleOnAllWorkspaces(true)`.
+
+Widgets remain fully interactive. **Dragging** streams pointer deltas over IPC (`widget:drag-*`) and repositions the window with `setBounds`. **Resizing** uses invisible edge/corner handles that stream `widget:resize-*` events; the main process computes new bounds from the chosen edge, enforces minimum sizes, clamps to the display, and persists them. Because `type: 'desktop'` windows are not resizable by the WM, this custom path is what makes resize work at all.
 
 Verify with:
 
 ```bash
-xprop -id <window> _NET_WM_STATE          # contains _NET_WM_STATE_BELOW
-xprop -root _NET_CLIENT_LIST_STACKING    # widgets above the desktop, below app windows
+xprop -id <window> _NET_WM_WINDOW_TYPE    # _NET_WM_WINDOW_TYPE_DESKTOP
 ```
 
-If `wmctrl` is not installed, the app falls back to the desktop window type (correctly layered, but not interactive) and logs a warning. Install it with `sudo apt install wmctrl` — it is present on most X11 desktops already.
+The Settings window is a normal window (`_NET_WM_WINDOW_TYPE_NORMAL`, `skipTaskbar: false`), so it appears in the dock and Scale as usual. Text entry lives in normal popover windows (weather location, reminder editor) because desktop-layer windows cannot take keyboard focus on Cinnamon.
 
-**Dragging** does not use `-webkit-app-region: drag`, which is unreliable for transparent frameless windows on X11. `WidgetFrame` streams pointer deltas over IPC (`widget:drag-*`) and the main process repositions the window with `setBounds`, pinning the persisted size so fractional scaling cannot inflate it.
+## Settings and data
 
-**Focus:** widgets are regular focusable windows, so clicking one focuses it. Text entry lives in the separate location popover (`cityEditor.ts`) to keep the weather card itself read-only.
+`electron-store` keeps data in `~/.config/Widgets/`:
 
-## Settings
-
-Stored by `electron-store` in `~/.config/Desktop Widgets/settings.json`:
+- `settings.json` — theme, autostart, lock state, dock placeholder, weather, and per-widget state/config.
+- `reminders.json` — the global reminder list.
 
 ```jsonc
+// settings.json (excerpt)
 {
   "theme": { "mode": "dark", "accent": "#8b7ed6" },
   "locked": false,
   "autostart": false,
+  "keepDockIcon": false,
   "weather": { "city": "Dhaka, Dhaka Division", "latitude": 23.71, "longitude": 90.41, "units": "metric" },
   "widgets": {
     "clock": {
-      "x": 1248,
-      "y": 51,
-      "width": 320,
-      "height": 180,
-      "visible": true,
+      "x": 1248, "y": 51, "width": 320, "height": 180, "visible": true,
       "config": {
         "size": "medium", "opacity": 1, "background": "auto",
         "accent": "auto", "textColor": "auto", "radius": 26, "locked": false,
@@ -223,9 +243,9 @@ Stored by `electron-store` in `~/.config/Desktop Widgets/settings.json`:
 }
 ```
 
-- **Drag** anywhere on a card; **resize** from the window edges.
-- **Lock position** disables drag and resize (the drag handlers and native resize are turned off).
-- Widget windows are pinned to the bottom of the stack with `_NET_WM_STATE_BELOW`; positions and sizes are restored on launch.
+- **Drag** anywhere on a widget to move it; **resize** from any edge or corner.
+- **Lock position** disables drag, resize, and the resize handles for that widget; the global lock in General disables them for all widgets.
+- Positions, sizes, and configs are restored on launch. A drag/resize marks the widget's size as `custom` so Settings reflects it.
 
 ## Autostart
 
@@ -239,10 +259,11 @@ The tray toggle writes/removes `~/.config/autostart/desktop-widgets.desktop`. In
 
 ## Notes
 
-- Requires **wmctrl** for the below-desktop layer (`sudo apt install wmctrl`), and X11 — Wayland does not expose EWMH hints.
+- Requires Linux **X11** for the desktop layer; Wayland does not expose the EWMH desktop-window behavior.
+- The tray icon needs AppIndicator support (`libayatana-appindicator3-1`, declared as a `.deb` dependency). If the tray is unavailable, Settings remains reachable from the dock/launcher because the app is single-instance.
 - Startup geometry is deliberately not persisted: Chromium reports frameless transparent X11 windows a few pixels larger under fractional scaling, and saving that would compound on every launch.
-- Fonts use what the system already has: `Noto Sans`, `DejaVu Sans Mono`, and `Z003` (URW Chancery) for the script weekday. No webfonts are downloaded.
-- Icons are generated from code (`scripts/make-icons.mjs`, signed-distance shapes + a hand-rolled PNG encoder) so the repo carries no binary assets and needs no image dependency.
+- Fonts are bundled locally as WOFF2 (SIL Open Font License) and committed under `src/renderer/fonts/` with their license files. No webfonts are fetched at runtime.
+- Icons are generated from code (`scripts/make-icons.mjs`, signed-distance shapes + a hand-rolled PNG encoder).
 - `scripts/capture.mjs` screenshots every widget through the DevTools protocol — useful when windows are covered:
 
   ```bash

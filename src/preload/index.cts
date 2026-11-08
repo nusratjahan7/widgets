@@ -38,6 +38,9 @@ const CHANNELS = {
   dragStart: 'widget:drag-start',
   dragMove: 'widget:drag-move',
   dragEnd: 'widget:drag-end',
+  resizeStart: 'widget:resize-start',
+  resizeMove: 'widget:resize-move',
+  resizeEnd: 'widget:resize-end',
   settingsGet: 'settings:get',
   settingsSet: 'settings:set',
   settingsSnapshot: 'settings:snapshot',
@@ -76,6 +79,10 @@ const api: WidgetApi = {
   startDrag: (screenX, screenY) => ipcRenderer.send(CHANNELS.dragStart, screenX, screenY),
   dragTo: (screenX, screenY) => ipcRenderer.send(CHANNELS.dragMove, screenX, screenY),
   endDrag: () => ipcRenderer.send(CHANNELS.dragEnd),
+  startResize: (edge, screenX, screenY) =>
+    ipcRenderer.send(CHANNELS.resizeStart, edge, screenX, screenY),
+  resizeTo: (screenX, screenY) => ipcRenderer.send(CHANNELS.resizeMove, screenX, screenY),
+  endResize: () => ipcRenderer.send(CHANNELS.resizeEnd),
 
   getSettings: () => ipcRenderer.invoke(CHANNELS.settingsGet) as Promise<SettingsSnapshot>,
   setSettings: (patch: SettingsPatch) =>

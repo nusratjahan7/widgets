@@ -1,4 +1,5 @@
 import { useRef, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
+import type { ResizeEdge } from '../../shared/types';
 import { useWidgetContext } from '../state/WidgetProvider';
 
 interface WidgetFrameProps {
@@ -8,6 +9,8 @@ interface WidgetFrameProps {
 }
 
 const INTERACTIVE = 'button, input, a, [data-no-drag]';
+
+const RESIZE_EDGES: readonly ResizeEdge[] = ['n', 's', 'e', 'w', 'nw', 'ne', 'sw', 'se'];
 
 function Gear() {
   return (
@@ -30,6 +33,7 @@ export function WidgetFrame({ children, className = '', onActivate }: WidgetFram
   const pending = useRef<{ x: number; y: number } | null>(null);
   const tap = useRef<{ x: number; y: number } | null>(null);
   const frame = useRef<number | null>(null);
+  const resizing = useRef(false);
 
   const config = context.config;
   const accent = typeof config.accent === 'string' && config.accent !== 'auto' ? config.accent : null;
@@ -96,6 +100,32 @@ export function WidgetFrame({ children, className = '', onActivate }: WidgetFram
     }
   }
 
+  function onResizeStart(event: PointerEvent<HTMLDivElement>, edge: ResizeEdge) {
+    if (event.button !== 0) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    resizing.current = true;
+    window.widgets.startResize(edge, event.screenX, event.screenY);
+  }
+
+  function onResizeMove(event: PointerEvent<HTMLDivElement>) {
+    if (!resizing.current) return;
+    event.preventDefault();
+    window.widgets.resizeTo(event.screenX, event.screenY);
+  }
+
+  function onResizeEnd(event: PointerEvent<HTMLDivElement>) {
+    if (!resizing.current) return;
+
+    resizing.current = false;
+    window.widgets.endResize();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
   return (
     <div
       className={`card ${className}`}
@@ -116,6 +146,19 @@ export function WidgetFrame({ children, className = '', onActivate }: WidgetFram
       >
         <Gear />
       </button>
+      {!context.locked &&
+        RESIZE_EDGES.map((edge) => (
+          <div
+            key={edge}
+            className="resize-handle"
+            data-edge={edge}
+            data-no-drag
+            onPointerDown={(event) => onResizeStart(event, edge)}
+            onPointerMove={onResizeMove}
+            onPointerUp={onResizeEnd}
+            onPointerCancel={onResizeEnd}
+          />
+        ))}
       {children}
     </div>
   );
