@@ -42,19 +42,19 @@ Get the latest installers from
 
 | OS | Download |
 | --- | --- |
-| Linux (Debian/Ubuntu/Mint) | [`.deb`](https://github.com/nusratjahan7/widgets/releases/latest/download/desktop-widgets_1.3.0_amd64.deb) |
-| Linux (any distro) | [`.AppImage`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.3.0.AppImage) |
-| Windows | [`.exe installer`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets.Setup.1.3.0.exe) |
-| macOS (Apple Silicon) | [`.dmg`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.3.0-arm64.dmg) |
+| Linux (Debian/Ubuntu/Mint) | [`.deb`](https://github.com/nusratjahan7/widgets/releases/latest/download/desktop-widgets_1.3.1_amd64.deb) |
+| Linux (any distro) | [`.AppImage`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.3.1.AppImage) |
+| Windows | [`.exe installer`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets.Setup.1.3.1.exe) |
+| macOS (Apple Silicon) | [`.dmg`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.3.1-arm64.dmg) |
 
-These links target the 1.3.0 assets; the [releases page](https://github.com/nusratjahan7/widgets/releases) always lists the newest builds. Releases are built automatically when a `v*` tag is pushed.
+These links target the 1.3.1 assets; the [releases page](https://github.com/nusratjahan7/widgets/releases) always lists the newest builds. Releases are built automatically when a `v*` tag is pushed.
 
 ## Install
 
 ### Linux — `.deb`
 
 ```bash
-sudo apt install ./desktop-widgets_1.3.0_amd64.deb
+sudo apt install ./desktop-widgets_1.3.1_amd64.deb
 ```
 
 The package depends on `libayatana-appindicator3-1` (tray integration), along with the usual Electron libraries. Launch **Widgets** from your app menu (or run `/opt/Widgets/desktop-widgets`). Uninstall with `sudo apt remove desktop-widgets`.
@@ -62,11 +62,11 @@ The package depends on `libayatana-appindicator3-1` (tray integration), along wi
 ### Linux — AppImage
 
 ```bash
-chmod +x Widgets-1.3.0.AppImage
-./Widgets-1.3.0.AppImage
+chmod +x Widgets-1.3.1.AppImage
+./Widgets-1.3.1.AppImage
 ```
 
-If your distro lacks FUSE, run `./Widgets-1.3.0.AppImage --appimage-extract-and-run`.
+If your distro lacks FUSE, run `./Widgets-1.3.1.AppImage --appimage-extract-and-run`.
 
 **Requirements:** Linux X11 (not Wayland) for the true desktop layer. No `wmctrl` or other helper is needed.
 
@@ -117,7 +117,7 @@ Release CI fetches Electron and the electron-builder tools from mirrors (`ELECTR
 
 A Win+V-style frameless panel (about 420×460) that opens near the cursor and hides on blur or Esc. Drag the tab bar to move it. Six tabs: **Recent**, **Emoji**, **GIF**, **Kaomoji**, **Symbols**, and **Clipboard history**. Selecting an item copies it, hides the panel, and — when a paste helper is available — pastes it into the window that was focused before.
 
-- Launch/toggle with `desktop-widgets --toggle` (installed) or `./Widgets-1.3.0.AppImage --toggle`. A second launch toggles the running instance; launching with the flag when the app is not running starts it as usual and opens the panel.
+- Launch/toggle with `desktop-widgets --toggle` (installed) or `./Widgets-1.3.1.AppImage --toggle`. A second launch toggles the running instance; launching with the flag when the app is not running starts it as usual and opens the panel.
 - Bind it to **Super+V**:
   - **GNOME**: Settings → Keyboard → Custom Shortcuts → add `desktop-widgets --toggle` on Super+V, then disable the existing “Toggle message tray” Super+V binding.
   - **KDE**: System Settings → Shortcuts → Custom → add the same command, then disable KDE's built-in clipboard Super+V action.
