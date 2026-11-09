@@ -52,6 +52,20 @@ export const IPC = {
   dockStopPlank: 'dock:stop-plank',
   dockRestartPlank: 'dock:restart-plank',
   dockSize: 'dock:size',
+
+  panelToggle: 'panel:toggle',
+  panelHide: 'panel:hide',
+  panelShown: 'panel:shown',
+  panelStatus: 'panel:status',
+  panelHistoryGet: 'panel:history-get',
+  panelHistory: 'panel:history',
+  panelRecentsGet: 'panel:recents-get',
+  panelRecents: 'panel:recents',
+  panelUseItem: 'panel:use-item',
+  panelHistoryDelete: 'panel:history-delete',
+  panelHistoryClear: 'panel:history-clear',
+  panelHistoryPin: 'panel:history-pin',
+  panelTenor: 'panel:tenor',
 } as const;
 
 export type IpcChannels = typeof IPC;

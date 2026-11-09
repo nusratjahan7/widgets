@@ -1,8 +1,16 @@
 import type { Settings, ThemeMode, WidgetBounds, WidgetState } from '../types.js';
 import { DOCK_DEFAULTS } from '../dock.js';
+import type { ClipboardPanelSettings } from '../clipboard-panel/types.js';
 import { sanitizeDockSettings } from './dock.js';
 import { WIDGETS, WIDGET_IDS, type WidgetId } from '../widgets.js';
 import { defaultConfig, isHexColor, isRecord, sanitizeConfig } from './values.js';
+
+export const CLIPBOARD_PANEL_DEFAULTS: ClipboardPanelSettings = {
+  enabled: true,
+  historyEnabled: true,
+  autoPaste: true,
+  tenorApiKey: '',
+};
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: { mode: 'dark', accent: '#8b7ed6' },
@@ -11,6 +19,7 @@ export const DEFAULT_SETTINGS: Settings = {
   keepDockIcon: false,
   weather: { city: '', latitude: null, longitude: null, units: 'metric' },
   dock: DOCK_DEFAULTS,
+  clipboardPanel: CLIPBOARD_PANEL_DEFAULTS,
   widgets: {},
 };
 
@@ -46,6 +55,7 @@ export function sanitizeSettings(raw: unknown): Settings {
   const theme = isRecord(source.theme) ? source.theme : {};
   const weather = isRecord(source.weather) ? source.weather : {};
   const widgets = isRecord(source.widgets) ? source.widgets : {};
+  const clipboardPanel = isRecord(source.clipboardPanel) ? source.clipboardPanel : {};
 
   const nextWidgets: Settings['widgets'] = {};
   for (const id of WIDGET_IDS) {
@@ -68,6 +78,15 @@ export function sanitizeSettings(raw: unknown): Settings {
       units: weather.units === 'imperial' ? 'imperial' : 'metric',
     },
     dock: sanitizeDockSettings(source.dock),
+    clipboardPanel: {
+      enabled: clipboardPanel.enabled !== false,
+      historyEnabled: clipboardPanel.historyEnabled !== false,
+      autoPaste: clipboardPanel.autoPaste !== false,
+      tenorApiKey:
+        typeof clipboardPanel.tenorApiKey === 'string'
+          ? clipboardPanel.tenorApiKey.trim().slice(0, 200)
+          : '',
+    },
     widgets: nextWidgets,
   };
 }

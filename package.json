@@ -1,9 +1,9 @@
 {
   "name": "desktop-widgets",
   "productName": "Widgets",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
-  "description": "Frameless X11 desktop widgets: clock, date, calendar, system stats, weather, and reminders.",
+  "description": "Frameless X11 desktop widgets: clock, date, calendar, system stats, weather, reminders, and a Win+V clipboard panel.",
   "author": {
     "name": "Nusrat",
     "email": "nusrat@localhost"
@@ -45,6 +45,7 @@
     "electron-builder": "^26.18.0",
     "tailwindcss": "^4.3.5",
     "typescript": "^5.9.3",
+    "unicode-emoji-json": "^0.9.0",
     "vite": "^8.3.6"
   },
   "build": {

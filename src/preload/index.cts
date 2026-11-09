@@ -15,6 +15,13 @@ import type {
   WidgetUpdateResult,
 } from '../shared/types.js';
 import type { DockPreviewPayload, DockRect, DockSnapshot, DockStatus } from '../shared/dock.js';
+import type {
+  ClipboardHistoryItem,
+  ClipboardPanelStatus,
+  PanelRecentItem,
+  PanelUseRequest,
+  TenorSearchResult,
+} from '../shared/clipboard-panel/types.js';
 import type { WidgetId } from '../shared/widgets.js';
 
 // Literal channel names, checked against the shared map at compile time so the
@@ -72,6 +79,19 @@ const CHANNELS = {
   dockStopPlank: 'dock:stop-plank',
   dockRestartPlank: 'dock:restart-plank',
   dockSize: 'dock:size',
+  panelToggle: 'panel:toggle',
+  panelHide: 'panel:hide',
+  panelShown: 'panel:shown',
+  panelStatus: 'panel:status',
+  panelHistoryGet: 'panel:history-get',
+  panelHistory: 'panel:history',
+  panelRecentsGet: 'panel:recents-get',
+  panelRecents: 'panel:recents',
+  panelUseItem: 'panel:use-item',
+  panelHistoryDelete: 'panel:history-delete',
+  panelHistoryClear: 'panel:history-clear',
+  panelHistoryPin: 'panel:history-pin',
+  panelTenor: 'panel:tenor',
 } as const satisfies IpcChannels;
 
 function subscribe<T>(channel: string, callback: (payload: T) => void): () => void {
@@ -147,6 +167,27 @@ const api: WidgetApi = {
   restartPlank: () => ipcRenderer.invoke(CHANNELS.dockRestartPlank) as Promise<void>,
   reportDockSize: (width: number, height: number) =>
     ipcRenderer.send(CHANNELS.dockSize, { width, height }),
+
+  toggleClipboardPanel: () => ipcRenderer.invoke(CHANNELS.panelToggle) as Promise<void>,
+  hideClipboardPanel: () => ipcRenderer.send(CHANNELS.panelHide),
+  onClipboardPanelShown: (callback) => subscribe<void>(CHANNELS.panelShown, callback),
+  getClipboardPanelStatus: () =>
+    ipcRenderer.invoke(CHANNELS.panelStatus) as Promise<ClipboardPanelStatus>,
+  getClipboardHistory: () =>
+    ipcRenderer.invoke(CHANNELS.panelHistoryGet) as Promise<ClipboardHistoryItem[]>,
+  onClipboardHistory: (callback) => subscribe<ClipboardHistoryItem[]>(CHANNELS.panelHistory, callback),
+  deleteClipboardItem: (id: string) =>
+    ipcRenderer.invoke(CHANNELS.panelHistoryDelete, id) as Promise<ClipboardHistoryItem[]>,
+  clearClipboardHistory: () =>
+    ipcRenderer.invoke(CHANNELS.panelHistoryClear) as Promise<ClipboardHistoryItem[]>,
+  pinClipboardItem: (id: string, pinned: boolean) =>
+    ipcRenderer.invoke(CHANNELS.panelHistoryPin, { id, pinned }) as Promise<ClipboardHistoryItem[]>,
+  useClipboardPanelItem: (request: PanelUseRequest) =>
+    ipcRenderer.invoke(CHANNELS.panelUseItem, request) as Promise<void>,
+  getPanelRecents: () => ipcRenderer.invoke(CHANNELS.panelRecentsGet) as Promise<PanelRecentItem[]>,
+  onPanelRecents: (callback) => subscribe<PanelRecentItem[]>(CHANNELS.panelRecents, callback),
+  searchTenor: (query: string) =>
+    ipcRenderer.invoke(CHANNELS.panelTenor, query) as Promise<TenorSearchResult>,
 };
 
 contextBridge.exposeInMainWorld('widgets', api);

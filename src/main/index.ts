@@ -2,10 +2,21 @@ import { app, ipcMain, nativeTheme, powerMonitor } from 'electron';
 import { isHexColor, isRecord, isSizePreset } from '../shared/config/index.js';
 import { mergeDockSettings } from '../shared/config/dock.js';
 import { IPC } from '../shared/ipc.js';
+import { PANEL_LIMITS } from '../shared/clipboard-panel/types.js';
 import type { ThemeSettings, WidgetUpdateResult } from '../shared/types.js';
 import { WIDGET_IDS, isWidgetId } from '../shared/widgets.js';
 import { applyAutostart } from './autolaunch.js';
 import { openCityEditor } from './cityEditor.js';
+import {
+  ClipboardPanelController,
+  getClipboardPanel,
+  registerPanelMediaScheme,
+  servePanelMedia,
+  setClipboardPanel,
+} from './clipboard-panel/index.js';
+import * as clipboardHistory from './clipboard-panel/history.js';
+import * as clipboardRecents from './clipboard-panel/recents.js';
+import { searchTenor } from './clipboard-panel/tenor.js';
 import {
   getSettings,
   mergeWidgetConfig,
@@ -29,6 +40,9 @@ import * as wm from './windowManager.js';
 const VALID_MODES: ThemeSettings['mode'][] = ['dark', 'light', 'system'];
 
 let dockController: DockController | null = null;
+let clipboardPanel: ClipboardPanelController | null = null;
+
+registerPanelMediaScheme();
 
 function isCoordinate(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
@@ -68,6 +82,23 @@ function applySettingsPatch(raw: unknown): void {
     if (merged.replacePlank !== current.replacePlank) setPlankEnabled(!merged.replacePlank);
 
     dockController?.applySettings(merged);
+  }
+
+  if (isRecord(raw.clipboardPanel)) {
+    const current = getSettings().clipboardPanel;
+    const panel = raw.clipboardPanel;
+    const merged = {
+      enabled: typeof panel.enabled === 'boolean' ? panel.enabled : current.enabled,
+      historyEnabled:
+        typeof panel.historyEnabled === 'boolean' ? panel.historyEnabled : current.historyEnabled,
+      autoPaste: typeof panel.autoPaste === 'boolean' ? panel.autoPaste : current.autoPaste,
+      tenorApiKey:
+        typeof panel.tenorApiKey === 'string'
+          ? panel.tenorApiKey.trim().slice(0, PANEL_LIMITS.tenorKey)
+          : current.tenorApiKey,
+    };
+    store.set('clipboardPanel', merged);
+    clipboardPanel?.applySettings(merged);
   }
 
   const weather = isRecord(raw.weather) ? raw.weather : null;
@@ -331,6 +362,39 @@ function registerIpc(): void {
     dockController?.applySettings(getSettings().dock);
     await startPlank();
   });
+
+  ipcMain.handle(IPC.panelToggle, () => clipboardPanel?.toggle());
+
+  ipcMain.on(IPC.panelHide, () => clipboardPanel?.hide());
+
+  ipcMain.handle(IPC.panelStatus, () => {
+    return (
+      clipboardPanel?.status() ?? {
+        session: 'other',
+        pasteTool: null,
+        clipboardWatch: false,
+        tenorConfigured: Boolean(getSettings().clipboardPanel.tenorApiKey),
+      }
+    );
+  });
+
+  ipcMain.handle(IPC.panelHistoryGet, () => clipboardHistory.list());
+  ipcMain.handle(IPC.panelRecentsGet, () => clipboardRecents.list());
+
+  ipcMain.handle(IPC.panelHistoryDelete, (_event, id: unknown) => clipboardHistory.remove(id));
+
+  ipcMain.handle(IPC.panelHistoryClear, () => clipboardHistory.clear());
+
+  ipcMain.handle(IPC.panelHistoryPin, (_event, payload: unknown) => {
+    if (!isRecord(payload)) return clipboardHistory.list();
+    return clipboardHistory.setPinned(payload.id, payload.pinned);
+  });
+
+  ipcMain.handle(IPC.panelUseItem, (_event, payload: unknown) => clipboardPanel?.useItem(payload));
+
+  ipcMain.handle(IPC.panelTenor, (_event, query: unknown) =>
+    searchTenor(typeof query === 'string' ? query : '', getSettings().clipboardPanel.tenorApiKey),
+  );
 }
 
 function startLoops(): void {
@@ -351,6 +415,7 @@ function start(): void {
   migrateSettings();
   registerIpc();
   initTheme();
+  servePanelMedia();
   ensureWeatherDefaults();
   applyAutostart(getSettings().autostart);
 
@@ -366,6 +431,10 @@ function start(): void {
   startLoops();
   startReminderScheduler();
 
+  clipboardPanel = new ClipboardPanelController(getSettings().clipboardPanel);
+  setClipboardPanel(clipboardPanel);
+  void clipboardPanel.start();
+
   const dockSettings = getSettings().dock;
   dockController = new DockController(dockSettings);
   dockController.start();
@@ -373,18 +442,34 @@ function start(): void {
   if (dockSettings.enabled && dockSettings.replacePlank) setPlankEnabled(false);
 }
 
-if (!app.requestSingleInstanceLock()) {
+const wantsToggle = process.argv.includes('--toggle');
+
+if (!app.requestSingleInstanceLock({ toggle: wantsToggle })) {
   app.quit();
 } else {
-  app.on('second-instance', () => openSettings());
+  app.on('second-instance', (_event, argv, _workingDirectory, data) => {
+    if ((isRecord(data) && data.toggle === true) || argv.includes('--toggle')) {
+      getClipboardPanel()?.toggle();
+      return;
+    }
+    openSettings();
+  });
 
-  app.whenReady().then(start);
+  app.whenReady().then(() => {
+    start();
+    if (wantsToggle) getClipboardPanel()?.toggle();
+  });
 
   // Widgets may all be hidden; the tray keeps the app alive.
   app.on('window-all-closed', () => {});
-  app.on('activate', () => openSettings());
+  app.on('activate', () => {
+    if (wantsToggle || getClipboardPanel()?.isVisible()) return;
+    openSettings();
+  });
   app.on('before-quit', () => {
     markQuitting();
+    clipboardPanel?.stop();
+    setClipboardPanel(null);
     dockController?.stop();
     destroyDockIcon();
     destroyTray();

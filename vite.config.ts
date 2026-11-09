@@ -23,6 +23,9 @@ export default defineConfig({
         reminder: fileURLToPath(new URL('./src/renderer/reminder.html', import.meta.url)),
         dock: fileURLToPath(new URL('./src/renderer/dock.html', import.meta.url)),
         preview: fileURLToPath(new URL('./src/renderer/preview.html', import.meta.url)),
+        'clipboard-panel': fileURLToPath(
+          new URL('./src/renderer/clipboard-panel/index.html', import.meta.url),
+        ),
       },
     },
   },

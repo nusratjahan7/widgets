@@ -1,4 +1,12 @@
 import type { WidgetConfig } from './config/types.js';
+import type {
+  ClipboardHistoryItem,
+  ClipboardPanelSettings,
+  ClipboardPanelStatus,
+  PanelRecentItem,
+  PanelUseRequest,
+  TenorSearchResult,
+} from './clipboard-panel/types.js';
 import type { DockPreviewPayload, DockRect, DockSettings, DockSnapshot, DockStatus } from './dock.js';
 import type { WidgetId } from './widgets.js';
 
@@ -37,6 +45,7 @@ export type Settings = {
   keepDockIcon: boolean;
   weather: WeatherSettings;
   dock: DockSettings;
+  clipboardPanel: ClipboardPanelSettings;
   widgets: Partial<Record<WidgetId, WidgetState>>;
 };
 
@@ -110,6 +119,7 @@ export interface SettingsPatch {
   keepDockIcon?: boolean;
   weather?: Partial<WeatherSettings>;
   dock?: Partial<DockSettings>;
+  clipboardPanel?: Partial<ClipboardPanelSettings>;
 }
 
 export interface WidgetUpdate {
@@ -180,4 +190,18 @@ export interface WidgetApi {
   stopPlank(): Promise<void>;
   restartPlank(): Promise<void>;
   reportDockSize(width: number, height: number): void;
+
+  toggleClipboardPanel(): Promise<void>;
+  hideClipboardPanel(): void;
+  onClipboardPanelShown(callback: () => void): () => void;
+  getClipboardPanelStatus(): Promise<ClipboardPanelStatus>;
+  getClipboardHistory(): Promise<ClipboardHistoryItem[]>;
+  onClipboardHistory(callback: (items: ClipboardHistoryItem[]) => void): () => void;
+  deleteClipboardItem(id: string): Promise<ClipboardHistoryItem[]>;
+  clearClipboardHistory(): Promise<ClipboardHistoryItem[]>;
+  pinClipboardItem(id: string, pinned: boolean): Promise<ClipboardHistoryItem[]>;
+  useClipboardPanelItem(request: PanelUseRequest): Promise<void>;
+  getPanelRecents(): Promise<PanelRecentItem[]>;
+  onPanelRecents(callback: (items: PanelRecentItem[]) => void): () => void;
+  searchTenor(query: string): Promise<TenorSearchResult>;
 }

@@ -7,6 +7,7 @@ On Linux the widgets are real desktop windows (`_NET_WM_WINDOW_TYPE_DESKTOP`), s
 ## Features
 
 - Six widgets: clock, typographic date card, calendar, system stats, weather, and reminders.
+- Win+V-style clipboard panel (`--toggle`) with recent emoji, skin-tone emoji, Tenor GIFs, kaomoji, symbols, and clipboard history.
 - Drag to move; drag any edge or corner to resize (independently of the WM), with a per-widget or global lock.
 - Live Settings window with a generic schema renderer, per-widget live previews, themes, accent colors, and sizes.
 - Tray icon and single-instance launcher so Settings is always reachable.
@@ -41,19 +42,19 @@ Get the latest installers from
 
 | OS | Download |
 | --- | --- |
-| Linux (Debian/Ubuntu/Mint) | [`.deb`](https://github.com/nusratjahan7/widgets/releases/latest/download/desktop-widgets_1.2.0_amd64.deb) |
-| Linux (any distro) | [`.AppImage`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.2.0.AppImage) |
-| Windows | [`.exe installer`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets.Setup.1.2.0.exe) |
-| macOS (Apple Silicon) | [`.dmg`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.2.0-arm64.dmg) |
+| Linux (Debian/Ubuntu/Mint) | [`.deb`](https://github.com/nusratjahan7/widgets/releases/latest/download/desktop-widgets_1.3.0_amd64.deb) |
+| Linux (any distro) | [`.AppImage`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.3.0.AppImage) |
+| Windows | [`.exe installer`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets.Setup.1.3.0.exe) |
+| macOS (Apple Silicon) | [`.dmg`](https://github.com/nusratjahan7/widgets/releases/latest/download/Widgets-1.3.0-arm64.dmg) |
 
-These links target the 1.2.0 assets; the [releases page](https://github.com/nusratjahan7/widgets/releases) always lists the newest builds. Releases are built automatically when a `v*` tag is pushed.
+These links target the 1.3.0 assets; the [releases page](https://github.com/nusratjahan7/widgets/releases) always lists the newest builds. Releases are built automatically when a `v*` tag is pushed.
 
 ## Install
 
 ### Linux — `.deb`
 
 ```bash
-sudo apt install ./desktop-widgets_1.2.0_amd64.deb
+sudo apt install ./desktop-widgets_1.3.0_amd64.deb
 ```
 
 The package depends on `libayatana-appindicator3-1` (tray integration), along with the usual Electron libraries. Launch **Widgets** from your app menu (or run `/opt/Widgets/desktop-widgets`). Uninstall with `sudo apt remove desktop-widgets`.
@@ -61,11 +62,11 @@ The package depends on `libayatana-appindicator3-1` (tray integration), along wi
 ### Linux — AppImage
 
 ```bash
-chmod +x Widgets-1.2.0.AppImage
-./Widgets-1.2.0.AppImage
+chmod +x Widgets-1.3.0.AppImage
+./Widgets-1.3.0.AppImage
 ```
 
-If your distro lacks FUSE, run `./Widgets-1.2.0.AppImage --appimage-extract-and-run`.
+If your distro lacks FUSE, run `./Widgets-1.3.0.AppImage --appimage-extract-and-run`.
 
 **Requirements:** Linux X11 (not Wayland) for the true desktop layer. No `wmctrl` or other helper is needed.
 
@@ -137,12 +138,30 @@ Settings → **Dock** controls enable, previews, icon size, hover zoom, position
 5. Middle-click a card (or click its X) — only that window closes; the indicator drops to `1`.
 6. Move the pointer from the icon to a card across the gap — it must not close until you leave both.
 
+## Clipboard panel
+
+A Win+V-style frameless panel (about 420×520) that opens near the cursor and hides on blur or Esc. Six tabs: **Recent**, **Emoji**, **GIF**, **Kaomoji**, **Symbols**, and **Clipboard history**. Selecting an item copies it, hides the panel, and — when a paste helper is available — pastes it into the window that was focused before.
+
+- Launch/toggle with `desktop-widgets --toggle` (installed) or `./Widgets-1.3.0.AppImage --toggle`. A second launch toggles the running instance; launching with the flag when the app is not running starts it as usual and opens the panel.
+- Bind it to **Super+V**:
+  - **GNOME**: Settings → Keyboard → Custom Shortcuts → add `desktop-widgets --toggle` on Super+V, then disable the existing “Toggle message tray” Super+V binding.
+  - **KDE**: System Settings → Shortcuts → Custom → add the same command, then disable KDE's built-in clipboard Super+V action.
+- Optional helpers, detected at runtime. Without them the panel copies only:
+  - X11 paste: `sudo apt install xdotool`
+  - Wayland watching: `sudo apt install wl-clipboard` (provides `wl-paste`)
+  - Wayland paste: `wtype` or `ydotool`
+- GIFs use the Tenor API. Paste a free key from [tenor.com/google-apis](https://tenor.com/google-apis) in **Settings → Clipboard**; it is stored locally in `settings.json`. Search and trending are attributed “Powered by Tenor.”
+- Clipboard watching polls every 500 ms on X11. On Wayland it uses `wl-paste --watch` when available and falls back to polling. History keeps the 50 newest text/image items, skips duplicates, and supports pin, delete, and clear all.
+- History is local: `~/.config/Widgets/clipboard-panel.json` plus the `clipboard-panel-media/` folder for image entries. Turn off **Watch clipboard history** in Settings → Clipboard to stop recording; **Clear history** deletes it. Entries tagged by password managers (`x-kde-passwordManagerHint`) are skipped.
+- Keyboard: arrows move the selection, Enter copies the selected item, Tab/Shift+Tab switch tabs, and Esc clears a search or closes the panel.
+
 ## Settings window
 
-A normal framed window, opened from the tray or from the gear on each widget on hover. It has four tabs:
+A normal framed window, opened from the tray or from the gear on each widget on hover. It has five tabs:
 
 - **Widgets** — every registered widget with a show/hide switch (closes/creates its window immediately), a live preview captured from the real window, and **Customize**. **Reset to default** restores each widget's options and size, keeping visibility and position.
 - **Dock** — the dock options above, plus session/space-reservation status and Stop/Start Plank.
+- **Clipboard** — enable the panel, watch clipboard history, auto-paste, and the Tenor API key.
 - **Appearance** — theme mode and the six accent presets.
 - **General** — start at login, keep-dock-icon placeholder, lock all positions, reload widgets, quit, settings file location.
 
@@ -186,6 +205,7 @@ src/
     tray.ts        tray icon + menu (packaged icon from resources/tray.png)
     dockIcon.ts    optional 1×1 placeholder window for dock presence
     x11.ts         wmctrl/xprop window listing, focus/close, minimized + session checks
+    clipboard-panel/  Win+V panel: controller, clipboard watcher, history/recents stores, paste helper, Tenor, image protocol
     desktopEntry.ts  .desktop parsing, icon resolution, launching, Plank launcher seeding
     dock.ts        dock controller: poll loop, WM_CLASS grouping, hover state machine, actions
     dockWindow.ts  dock BrowserWindow geometry, auto-hide, strut lifecycle
@@ -211,6 +231,7 @@ src/
     settings.html  Settings window entry
     dock.html      dock bar entry
     preview.html   preview card row entry
+    clipboard-panel/  index.html + six-tab panel UI (Recent, Emoji, GIF, Kaomoji, Symbols, History)
     App.tsx        widget id → component map
     settings/      Settings UI (sidebar, tabs, generic field renderer, SelectControl, DockTab)
     dock/          dock icons, magnification, snapshot subscription
@@ -258,8 +279,10 @@ The Settings window is a normal window (`_NET_WM_WINDOW_TYPE_NORMAL`, `skipTaskb
 
 `electron-store` keeps data in `~/.config/Widgets/`:
 
-- `settings.json` — theme, autostart, lock state, dock placeholder, weather, and per-widget state/config.
+- `settings.json` — theme, autostart, lock state, dock placeholder, weather, clipboard-panel options, and per-widget state/config.
 - `reminders.json` — the global reminder list.
+- `clipboard-panel.json` — clipboard history (max 50) and the last 30 used emoji/symbols/kaomoji.
+- `clipboard-panel-media/` — PNG files backing image entries in the clipboard history.
 
 ```jsonc
 // settings.json (excerpt)
@@ -269,6 +292,7 @@ The Settings window is a normal window (`_NET_WM_WINDOW_TYPE_NORMAL`, `skipTaskb
   "autostart": false,
   "keepDockIcon": false,
   "weather": { "city": "Dhaka, Dhaka Division", "latitude": 23.71, "longitude": 90.41, "units": "metric" },
+  "clipboardPanel": { "enabled": true, "historyEnabled": true, "autoPaste": true, "tenorApiKey": "" },
   "widgets": {
     "clock": {
       "x": 1248, "y": 51, "width": 320, "height": 180, "visible": true,
