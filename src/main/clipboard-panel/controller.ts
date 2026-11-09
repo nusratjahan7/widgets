@@ -20,7 +20,7 @@ import { ClipboardWatcher } from './watcher.js';
 import { detectPasteTool, pasteInto, pasteTool } from './paster.js';
 
 const PANEL_WIDTH = 420;
-const PANEL_HEIGHT = 520;
+const PANEL_HEIGHT = 460;
 const EDGE = 8;
 const CURSOR_GAP = 12;
 const BLUR_GRACE_MS = 150;
@@ -45,6 +45,7 @@ export class ClipboardPanelController {
   private lastHiddenAt = 0;
   private pasting = false;
   private started = false;
+  private drag: { origin: { x: number; y: number }; start: { x: number; y: number } } | null = null;
 
   constructor(settings: ClipboardPanelSettings) {
     this.settings = settings;
@@ -115,8 +116,38 @@ export class ClipboardPanelController {
 
   hide(): void {
     this.lastHiddenAt = Date.now();
+    this.drag = null;
     const win = this.win;
     if (win && !win.isDestroyed() && win.isVisible()) win.hide();
+  }
+
+  beginDrag(screenX: number, screenY: number): void {
+    const win = this.win;
+    if (!win || win.isDestroyed() || !win.isVisible()) return;
+    const [x, y] = win.getPosition();
+    this.drag = { origin: { x, y }, start: { x: screenX, y: screenY } };
+  }
+
+  updateDrag(screenX: number, screenY: number): void {
+    if (!this.drag) return;
+    const win = this.win;
+    if (!win || win.isDestroyed()) return;
+
+    const bounds = win.getBounds();
+    const nextX = this.drag.origin.x + Math.round(screenX - this.drag.start.x);
+    const nextY = this.drag.origin.y + Math.round(screenY - this.drag.start.y);
+    const area = screen.getDisplayNearestPoint({
+      x: nextX + Math.round(bounds.width / 2),
+      y: nextY + Math.round(bounds.height / 2),
+    }).workArea;
+
+    const x = Math.min(Math.max(nextX, area.x), area.x + area.width - bounds.width);
+    const y = Math.min(Math.max(nextY, area.y), area.y + area.height - bounds.height);
+    win.setPosition(Math.round(x), Math.round(y));
+  }
+
+  endDrag(): void {
+    this.drag = null;
   }
 
   status(): ClipboardPanelStatus {
@@ -177,6 +208,7 @@ export class ClipboardPanelController {
 
   stop(): void {
     this.watcher.stop();
+    this.drag = null;
     const win = this.win;
     this.win = null;
     setPanelWindow(null);

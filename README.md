@@ -106,41 +106,16 @@ npm run icons      # regenerate assets/icon.png, assets/tray.png, build/icon.png
 
 Release CI fetches Electron and the electron-builder tools from mirrors (`ELECTRON_MIRROR` and `ELECTRON_BUILDER_BINARIES_MIRROR`) so upstream download outages do not break release builds.
 
-## Tray and dock
+## Tray and app launcher
 
 - The tray icon shows a menu with **Open Settings**, **Show / Hide widgets**, and **Quit**. Left-clicking the tray icon opens Settings.
 - Closing the Settings window hides it; the app keeps running with the widgets. Reopen it from the tray, by launching the app again (single-instance), or by clicking the pinned dock icon.
 - **Keep a dock icon while Settings is closed** (Settings → General, off by default) creates a tiny transparent minimized window so the panel keeps an app entry. It may also appear in Alt+Tab/task switchers.
 - Quit only from the tray menu or **Settings → General → Quit**.
 
-## Dock and window previews
-
-The app includes its own Bottom/Left/Right dock that can replace Plank. On first run it seeds its pinned icons from `~/.config/plank/dock1/launchers/*.dockitem`, and **Replace Plank on login** renames the Plank autostart entry (never deletes it).
-
-- Windows are grouped by **WM_CLASS**, so every window of one app sits under one icon. Docks, panels, and desktop windows are filtered out by `_NET_WM_WINDOW_TYPE`.
-- Hovering an icon for the configured delay opens a frosted card row above it: one card per window with a captured thumbnail, app icon, ellipsized title, and a close (X) button.
-- Click a card to focus/raise its window (minimized windows are restored). Middle-click a card or click **X** to close that window only.
-- Moving from the icon onto a card does not flicker: the main process samples the real cursor and keeps the card open while the pointer is over either the icon or the card, then closes it after a short grace period.
-- Thumbnails come from `desktopCapturer.getSources({ types: ['window'] })` and are refreshed every 1.5 s **only while a card is open**. Minimized or hidden windows fall back to the app icon.
-- Indicators: a short dot for running apps, a longer accent bar for the focused app, and a small count pill when an app has several windows.
-- **X11 only.** On Wayland the dock still launches apps, but hovering shows a notice that thumbnails require X11.
-
-Window control uses `wmctrl` and `xprop` (from the `wmctrl` and `x11-utils` packages, listed as `.deb` dependencies) instead of `xdotool` or a native X11 binding: they ship with Mint, need no build step, and `wmctrl -lxp` already returns the pid, WM_CLASS, and title used for grouping. `_NET_WM_STRUT_PARTIAL` (space reservation) is written by a small bundled `python3` ctypes helper; if Python is missing, the dock floats and the Settings tab suggests Auto-hide.
-
-Settings → **Dock** controls enable, previews, icon size, hover zoom, position, auto-hide, hover delay, thumbnail width, close button, and Plank replacement.
-
-### Testing previews
-
-1. Stop the old dock (`pkill plank`) or use **Settings → Dock → Stop Plank**.
-2. Open two windows of one app, e.g. `nemo ~/Documents & nemo ~/Downloads &`.
-3. Hover the Files icon for ~300 ms — two cards appear, centered above the icon, with a `2` indicator.
-4. Click the background card — that window raises and takes focus.
-5. Middle-click a card (or click its X) — only that window closes; the indicator drops to `1`.
-6. Move the pointer from the icon to a card across the gap — it must not close until you leave both.
-
 ## Clipboard panel
 
-A Win+V-style frameless panel (about 420×520) that opens near the cursor and hides on blur or Esc. Six tabs: **Recent**, **Emoji**, **GIF**, **Kaomoji**, **Symbols**, and **Clipboard history**. Selecting an item copies it, hides the panel, and — when a paste helper is available — pastes it into the window that was focused before.
+A Win+V-style frameless panel (about 420×460) that opens near the cursor and hides on blur or Esc. Drag the tab bar to move it. Six tabs: **Recent**, **Emoji**, **GIF**, **Kaomoji**, **Symbols**, and **Clipboard history**. Selecting an item copies it, hides the panel, and — when a paste helper is available — pastes it into the window that was focused before.
 
 - Launch/toggle with `desktop-widgets --toggle` (installed) or `./Widgets-1.3.0.AppImage --toggle`. A second launch toggles the running instance; launching with the flag when the app is not running starts it as usual and opens the panel.
 - Bind it to **Super+V**:
@@ -157,10 +132,9 @@ A Win+V-style frameless panel (about 420×520) that opens near the cursor and hi
 
 ## Settings window
 
-A normal framed window, opened from the tray or from the gear on each widget on hover. It has five tabs:
+A normal framed window, opened from the tray or from the gear on each widget on hover. It has four tabs:
 
 - **Widgets** — every registered widget with a show/hide switch (closes/creates its window immediately), a live preview captured from the real window, and **Customize**. **Reset to default** restores each widget's options and size, keeping visibility and position.
-- **Dock** — the dock options above, plus session/space-reservation status and Stop/Start Plank.
 - **Clipboard** — enable the panel, watch clipboard history, auto-paste, and the Tenor API key.
 - **Appearance** — theme mode and the six accent presets.
 - **General** — start at login, keep-dock-icon placeholder, lock all positions, reload widgets, quit, settings file location.
@@ -204,14 +178,8 @@ src/
     settingsWindow.ts  the framed Settings BrowserWindow (hide on close)
     tray.ts        tray icon + menu (packaged icon from resources/tray.png)
     dockIcon.ts    optional 1×1 placeholder window for dock presence
-    x11.ts         wmctrl/xprop window listing, focus/close, minimized + session checks
+    x11.ts         active-window lookup and focus restore for clipboard auto-paste
     clipboard-panel/  Win+V panel: controller, clipboard watcher, history/recents stores, paste helper, Tenor, image protocol
-    desktopEntry.ts  .desktop parsing, icon resolution, launching, Plank launcher seeding
-    dock.ts        dock controller: poll loop, WM_CLASS grouping, hover state machine, actions
-    dockWindow.ts  dock BrowserWindow geometry, auto-hide, strut lifecycle
-    dockPreview.ts preview BrowserWindow, positioning, thumbnail capture poll
-    dockStrut.ts   bundled ctypes helper for _NET_WM_STRUT_PARTIAL
-    plank.ts       reversible Plank autostart toggle and stop/start
     appState.ts    quit flag used by the Settings close handler
     settings.ts    electron-store schema, migration/validation, widget-state helpers
     reminders.ts   separate electron-store (reminders.json), CRUD + broadcast
@@ -229,13 +197,9 @@ src/
     editor.html    city popover entry
     reminder.html  reminder editor popover entry
     settings.html  Settings window entry
-    dock.html      dock bar entry
-    preview.html   preview card row entry
     clipboard-panel/  index.html + six-tab panel UI (Recent, Emoji, GIF, Kaomoji, Symbols, History)
     App.tsx        widget id → component map
-    settings/      Settings UI (sidebar, tabs, generic field renderer, SelectControl, DockTab)
-    dock/          dock icons, magnification, snapshot subscription
-    preview/       preview card row and thumbnails
+    settings/      Settings UI (sidebar, tabs, generic field renderer, SelectControl)
     state/         WidgetProvider: context + stats/weather subscriptions, theme tokens
     hooks/         useNow, useMinuteClock (minute/midnight + resume)
     components/    WidgetFrame (drag, resize handles, gear, tap-to-open, live style), Mark

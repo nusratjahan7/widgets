@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, type PointerEvent, type ReactNode } from 'react';
 import type { PanelTab } from '../../shared/clipboard-panel/types';
 
 export const PANEL_TABS: { id: PanelTab; label: string }[] = [
@@ -72,8 +72,38 @@ interface TabsProps {
 }
 
 export function Tabs({ tab, onChange }: TabsProps) {
+  const dragPointer = useRef<number | null>(null);
+
+  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    if ((event.target as HTMLElement).closest('button')) return;
+    event.preventDefault();
+    dragPointer.current = event.pointerId;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    window.widgets.startPanelDrag(event.screenX, event.screenY);
+  };
+
+  const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (dragPointer.current !== event.pointerId) return;
+    window.widgets.dragPanelTo(event.screenX, event.screenY);
+  };
+
+  const onPointerEnd = (event: PointerEvent<HTMLDivElement>) => {
+    if (dragPointer.current !== event.pointerId) return;
+    dragPointer.current = null;
+    window.widgets.endPanelDrag();
+  };
+
   return (
-    <div className="cp-tabs" role="tablist" aria-label="Clipboard panel sections">
+    <div
+      className="cp-tabs"
+      role="tablist"
+      aria-label="Clipboard panel sections"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerEnd}
+      onPointerCancel={onPointerEnd}
+    >
       {PANEL_TABS.map((item) => (
         <button
           key={item.id}

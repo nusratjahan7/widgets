@@ -1,6 +1,5 @@
 import { app, ipcMain, nativeTheme, powerMonitor } from 'electron';
 import { isHexColor, isRecord, isSizePreset } from '../shared/config/index.js';
-import { mergeDockSettings } from '../shared/config/dock.js';
 import { IPC } from '../shared/ipc.js';
 import { PANEL_LIMITS } from '../shared/clipboard-panel/types.js';
 import type { ThemeSettings, WidgetUpdateResult } from '../shared/types.js';
@@ -25,8 +24,6 @@ import {
 } from './settings.js';
 import { openSettings } from './settingsWindow.js';
 import { applyDockIcon, destroyDockIcon } from './dockIcon.js';
-import { DockController } from './dock.js';
-import { setPlankEnabled, startPlank, stopPlank } from './plank.js';
 import { markQuitting } from './appState.js';
 import { deleteReminder, listReminders, saveReminder } from './reminders.js';
 import { openReminderEditor } from './reminderEditor.js';
@@ -39,7 +36,6 @@ import * as wm from './windowManager.js';
 
 const VALID_MODES: ThemeSettings['mode'][] = ['dark', 'light', 'system'];
 
-let dockController: DockController | null = null;
 let clipboardPanel: ClipboardPanelController | null = null;
 
 registerPanelMediaScheme();
@@ -72,16 +68,6 @@ function applySettingsPatch(raw: unknown): void {
   if (typeof raw.keepDockIcon === 'boolean') {
     store.set('keepDockIcon', raw.keepDockIcon);
     applyDockIcon(raw.keepDockIcon);
-  }
-
-  if (isRecord(raw.dock)) {
-    const current = getSettings().dock;
-    const merged = mergeDockSettings(current, raw.dock);
-    store.set('dock', merged);
-
-    if (merged.replacePlank !== current.replacePlank) setPlankEnabled(!merged.replacePlank);
-
-    dockController?.applySettings(merged);
   }
 
   if (isRecord(raw.clipboardPanel)) {
@@ -289,83 +275,21 @@ function registerIpc(): void {
 
   ipcMain.handle(IPC.widgetCapture, (_event, id: unknown) => (isWidgetId(id) ? wm.captureWidget(id) : null));
 
-  ipcMain.handle(IPC.dockStatus, () => dockController?.status() ?? null);
-
-  ipcMain.on(IPC.dockRefresh, () => void dockController?.refresh());
-
-  ipcMain.on(IPC.dockHoverStart, (_event, payload: unknown) => {
-    if (!isRecord(payload) || typeof payload.appKey !== 'string' || !isRecord(payload.iconRect)) return;
-    const rect = payload.iconRect;
-    if (!isCoordinate(rect.x) || !isCoordinate(rect.y) || !isCoordinate(rect.width) || !isCoordinate(rect.height)) {
-      return;
-    }
-    dockController?.hoverStart(payload.appKey, {
-      x: rect.x,
-      y: rect.y,
-      width: rect.width,
-      height: rect.height,
-    });
-  });
-
-  ipcMain.on(IPC.dockHoverEnd, (_event, payload: unknown) => {
-    if (!isRecord(payload) || typeof payload.appKey !== 'string') return;
-    dockController?.hoverEnd(payload.appKey);
-  });
-
-  ipcMain.on(IPC.dockPreviewEnter, () => dockController?.previewEnter());
-  ipcMain.on(IPC.dockPreviewLeave, () => dockController?.previewLeave());
-  ipcMain.on(IPC.dockPreviewReady, () => dockController?.previewReady());
-
-  ipcMain.on(IPC.dockFocus, (_event, payload: unknown) => {
-    if (!isRecord(payload) || !isCoordinate(payload.windowId)) return;
-    void dockController?.focusWindow(payload.windowId);
-  });
-
-  ipcMain.on(IPC.dockClose, (_event, payload: unknown) => {
-    if (!isRecord(payload) || !isCoordinate(payload.windowId)) return;
-    void dockController?.closeWindow(payload.windowId);
-  });
-
-  ipcMain.on(IPC.dockCloseAll, (_event, payload: unknown) => {
-    if (!isRecord(payload) || typeof payload.appKey !== 'string') return;
-    void dockController?.closeAll(payload.appKey);
-  });
-
-  ipcMain.on(IPC.dockLaunch, (_event, payload: unknown) => {
-    if (!isRecord(payload) || typeof payload.appKey !== 'string') return;
-    void dockController?.launch(payload.appKey, payload.newWindow === true);
-  });
-
-  ipcMain.on(IPC.dockMenu, (_event, payload: unknown) => {
-    if (!isRecord(payload) || typeof payload.appKey !== 'string') return;
-    if (!isCoordinate(payload.x) || !isCoordinate(payload.y)) return;
-    dockController?.openMenu(payload.appKey, payload.x, payload.y);
-  });
-
-  ipcMain.handle(IPC.dockPin, (_event, payload: unknown) => {
-    if (!isRecord(payload) || typeof payload.appKey !== 'string') return;
-    if (typeof payload.pinned !== 'boolean') return;
-    dockController?.setPinned(payload.appKey, payload.pinned);
-  });
-
-  ipcMain.on(IPC.dockSize, (_event, payload: unknown) => {
-    if (!isRecord(payload) || !isCoordinate(payload.width) || !isCoordinate(payload.height)) return;
-    dockController?.resizeToContent(payload.width, payload.height);
-  });
-
-  ipcMain.on(IPC.dockReveal, () => dockController?.reveal());
-
-  ipcMain.handle(IPC.dockStopPlank, () => stopPlank());
-  ipcMain.handle(IPC.dockRestartPlank, async () => {
-    setPlankEnabled(true);
-    store.set('dock', { ...getSettings().dock, replacePlank: false });
-    dockController?.applySettings(getSettings().dock);
-    await startPlank();
-  });
-
   ipcMain.handle(IPC.panelToggle, () => clipboardPanel?.toggle());
 
   ipcMain.on(IPC.panelHide, () => clipboardPanel?.hide());
+
+  ipcMain.on(IPC.panelDragStart, (_event, screenX: unknown, screenY: unknown) => {
+    if (!isCoordinate(screenX) || !isCoordinate(screenY)) return;
+    clipboardPanel?.beginDrag(screenX, screenY);
+  });
+
+  ipcMain.on(IPC.panelDragMove, (_event, screenX: unknown, screenY: unknown) => {
+    if (!isCoordinate(screenX) || !isCoordinate(screenY)) return;
+    clipboardPanel?.updateDrag(screenX, screenY);
+  });
+
+  ipcMain.on(IPC.panelDragEnd, () => clipboardPanel?.endDrag());
 
   ipcMain.handle(IPC.panelStatus, () => {
     return (
@@ -434,12 +358,6 @@ function start(): void {
   clipboardPanel = new ClipboardPanelController(getSettings().clipboardPanel);
   setClipboardPanel(clipboardPanel);
   void clipboardPanel.start();
-
-  const dockSettings = getSettings().dock;
-  dockController = new DockController(dockSettings);
-  dockController.start();
-  // Disable Plank's autostart entry only once the user has opted in.
-  if (dockSettings.enabled && dockSettings.replacePlank) setPlankEnabled(false);
 }
 
 const wantsToggle = process.argv.includes('--toggle');
@@ -470,7 +388,6 @@ if (!app.requestSingleInstanceLock({ toggle: wantsToggle })) {
     markQuitting();
     clipboardPanel?.stop();
     setClipboardPanel(null);
-    dockController?.stop();
     destroyDockIcon();
     destroyTray();
   });

@@ -33,6 +33,12 @@ body[data-window="clipboard-panel"] {
   flex: none;
   padding: 8px 10px 7px;
   border-bottom: 1px solid var(--panel-border);
+  cursor: grab;
+  touch-action: none;
+}
+
+.cp-tabs:active {
+  cursor: grabbing;
 }
 
 .cp-tab {
