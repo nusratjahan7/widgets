@@ -14,6 +14,7 @@ import type {
   WidgetUpdate,
   WidgetUpdateResult,
 } from '../shared/types.js';
+import type { DockPreviewPayload, DockRect, DockSnapshot, DockStatus } from '../shared/dock.js';
 import type { WidgetId } from '../shared/widgets.js';
 
 // Literal channel names, checked against the shared map at compile time so the
@@ -51,6 +52,26 @@ const CHANNELS = {
   widgetReset: 'widget:reset',
   widgetReload: 'widget:reload',
   widgetCapture: 'widget:capture',
+  dockWindows: 'dock:windows',
+  dockFocus: 'dock:focus',
+  dockClose: 'dock:close',
+  dockHoverStart: 'dock:hover-start',
+  dockHoverEnd: 'dock:hover-end',
+  dockPreview: 'dock:preview',
+  dockPreviewClosed: 'dock:preview-closed',
+  dockPreviewEnter: 'dock:preview-enter',
+  dockPreviewLeave: 'dock:preview-leave',
+  dockPreviewReady: 'dock:preview-ready',
+  dockLaunch: 'dock:launch',
+  dockMenu: 'dock:menu',
+  dockPin: 'dock:pin',
+  dockCloseAll: 'dock:close-all',
+  dockRefresh: 'dock:refresh',
+  dockStatus: 'dock:status',
+  dockReveal: 'dock:reveal',
+  dockStopPlank: 'dock:stop-plank',
+  dockRestartPlank: 'dock:restart-plank',
+  dockSize: 'dock:size',
 } as const satisfies IpcChannels;
 
 function subscribe<T>(channel: string, callback: (payload: T) => void): () => void {
@@ -100,6 +121,32 @@ const api: WidgetApi = {
     ipcRenderer.invoke(CHANNELS.widgetCapture, id) as Promise<string | null>,
   openSettings: () => ipcRenderer.invoke(CHANNELS.settingsOpen) as Promise<void>,
   quitApp: () => ipcRenderer.invoke(CHANNELS.appQuit) as Promise<void>,
+
+  getDockStatus: () => ipcRenderer.invoke(CHANNELS.dockStatus) as Promise<DockStatus>,
+  onDockWindows: (callback) => subscribe<DockSnapshot>(CHANNELS.dockWindows, callback),
+  onDockPreview: (callback) => subscribe<DockPreviewPayload>(CHANNELS.dockPreview, callback),
+  onDockPreviewClosed: (callback) => subscribe<void>(CHANNELS.dockPreviewClosed, callback),
+  hoverStart: (appKey: string, iconRect: DockRect) =>
+    ipcRenderer.send(CHANNELS.dockHoverStart, { appKey, iconRect }),
+  hoverEnd: (appKey: string) => ipcRenderer.send(CHANNELS.dockHoverEnd, { appKey }),
+  previewEnter: (appKey: string) => ipcRenderer.send(CHANNELS.dockPreviewEnter, { appKey }),
+  previewLeave: (appKey: string) => ipcRenderer.send(CHANNELS.dockPreviewLeave, { appKey }),
+  previewReady: () => ipcRenderer.send(CHANNELS.dockPreviewReady),
+  focusWindow: (windowId: number) => ipcRenderer.send(CHANNELS.dockFocus, { windowId }),
+  closeWindow: (windowId: number) => ipcRenderer.send(CHANNELS.dockClose, { windowId }),
+  closeAll: (appKey: string) => ipcRenderer.send(CHANNELS.dockCloseAll, { appKey }),
+  launchApp: (appKey: string, newWindow?: boolean) =>
+    ipcRenderer.send(CHANNELS.dockLaunch, { appKey, newWindow: newWindow === true }),
+  openDockMenu: (appKey: string, x: number, y: number) =>
+    ipcRenderer.send(CHANNELS.dockMenu, { appKey, x, y }),
+  setPinned: (appKey: string, pinned: boolean) =>
+    ipcRenderer.invoke(CHANNELS.dockPin, { appKey, pinned }) as Promise<void>,
+  refreshDock: () => ipcRenderer.send(CHANNELS.dockRefresh),
+  revealDock: () => ipcRenderer.send(CHANNELS.dockReveal),
+  stopPlank: () => ipcRenderer.invoke(CHANNELS.dockStopPlank) as Promise<void>,
+  restartPlank: () => ipcRenderer.invoke(CHANNELS.dockRestartPlank) as Promise<void>,
+  reportDockSize: (width: number, height: number) =>
+    ipcRenderer.send(CHANNELS.dockSize, { width, height }),
 };
 
 contextBridge.exposeInMainWorld('widgets', api);

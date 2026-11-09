@@ -1,9 +1,10 @@
 import { Mark } from '../components/Mark';
 
-export type SettingsTab = 'widgets' | 'appearance' | 'general';
+export type SettingsTab = 'widgets' | 'dock' | 'appearance' | 'general';
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'widgets', label: 'Widgets' },
+  { id: 'dock', label: 'Dock' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'general', label: 'General' },
 ];

@@ -21,6 +21,8 @@ export default defineConfig({
         editor: fileURLToPath(new URL('./src/renderer/editor.html', import.meta.url)),
         settings: fileURLToPath(new URL('./src/renderer/settings.html', import.meta.url)),
         reminder: fileURLToPath(new URL('./src/renderer/reminder.html', import.meta.url)),
+        dock: fileURLToPath(new URL('./src/renderer/dock.html', import.meta.url)),
+        preview: fileURLToPath(new URL('./src/renderer/preview.html', import.meta.url)),
       },
     },
   },

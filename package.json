@@ -95,7 +95,9 @@
         "libatspi2.0-0",
         "libuuid1",
         "libsecret-1-0",
-        "libayatana-appindicator3-1"
+        "libayatana-appindicator3-1",
+        "wmctrl",
+        "x11-utils"
       ]
     },
     "win": {

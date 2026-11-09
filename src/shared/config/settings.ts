@@ -1,4 +1,6 @@
 import type { Settings, ThemeMode, WidgetBounds, WidgetState } from '../types.js';
+import { DOCK_DEFAULTS } from '../dock.js';
+import { sanitizeDockSettings } from './dock.js';
 import { WIDGETS, WIDGET_IDS, type WidgetId } from '../widgets.js';
 import { defaultConfig, isHexColor, isRecord, sanitizeConfig } from './values.js';
 
@@ -8,6 +10,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autostart: false,
   keepDockIcon: false,
   weather: { city: '', latitude: null, longitude: null, units: 'metric' },
+  dock: DOCK_DEFAULTS,
   widgets: {},
 };
 
@@ -64,6 +67,7 @@ export function sanitizeSettings(raw: unknown): Settings {
       longitude: finite(weather.longitude) ? weather.longitude : null,
       units: weather.units === 'imperial' ? 'imperial' : 'metric',
     },
+    dock: sanitizeDockSettings(source.dock),
     widgets: nextWidgets,
   };
 }

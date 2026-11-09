@@ -31,6 +31,27 @@ export const IPC = {
   widgetReset: 'widget:reset',
   widgetReload: 'widget:reload',
   widgetCapture: 'widget:capture',
+
+  dockWindows: 'dock:windows',
+  dockFocus: 'dock:focus',
+  dockClose: 'dock:close',
+  dockHoverStart: 'dock:hover-start',
+  dockHoverEnd: 'dock:hover-end',
+  dockPreview: 'dock:preview',
+  dockPreviewClosed: 'dock:preview-closed',
+  dockPreviewEnter: 'dock:preview-enter',
+  dockPreviewLeave: 'dock:preview-leave',
+  dockPreviewReady: 'dock:preview-ready',
+  dockLaunch: 'dock:launch',
+  dockMenu: 'dock:menu',
+  dockPin: 'dock:pin',
+  dockCloseAll: 'dock:close-all',
+  dockRefresh: 'dock:refresh',
+  dockStatus: 'dock:status',
+  dockReveal: 'dock:reveal',
+  dockStopPlank: 'dock:stop-plank',
+  dockRestartPlank: 'dock:restart-plank',
+  dockSize: 'dock:size',
 } as const;
 
 export type IpcChannels = typeof IPC;

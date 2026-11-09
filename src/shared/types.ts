@@ -1,4 +1,5 @@
 import type { WidgetConfig } from './config/types.js';
+import type { DockPreviewPayload, DockRect, DockSettings, DockSnapshot, DockStatus } from './dock.js';
 import type { WidgetId } from './widgets.js';
 
 export type ThemeMode = 'dark' | 'light' | 'system';
@@ -35,6 +36,7 @@ export type Settings = {
   autostart: boolean;
   keepDockIcon: boolean;
   weather: WeatherSettings;
+  dock: DockSettings;
   widgets: Partial<Record<WidgetId, WidgetState>>;
 };
 
@@ -107,6 +109,7 @@ export interface SettingsPatch {
   autostart?: boolean;
   keepDockIcon?: boolean;
   weather?: Partial<WeatherSettings>;
+  dock?: Partial<DockSettings>;
 }
 
 export interface WidgetUpdate {
@@ -156,4 +159,25 @@ export interface WidgetApi {
   captureWidget(id: WidgetId): Promise<string | null>;
   openSettings(): Promise<void>;
   quitApp(): Promise<void>;
+
+  getDockStatus(): Promise<DockStatus>;
+  onDockWindows(callback: (snapshot: DockSnapshot) => void): () => void;
+  onDockPreview(callback: (payload: DockPreviewPayload) => void): () => void;
+  onDockPreviewClosed(callback: () => void): () => void;
+  hoverStart(appKey: string, iconRect: DockRect): void;
+  hoverEnd(appKey: string): void;
+  previewEnter(appKey: string): void;
+  previewLeave(appKey: string): void;
+  previewReady(): void;
+  focusWindow(windowId: number): void;
+  closeWindow(windowId: number): void;
+  closeAll(appKey: string): void;
+  launchApp(appKey: string, newWindow?: boolean): void;
+  openDockMenu(appKey: string, x: number, y: number): void;
+  setPinned(appKey: string, pinned: boolean): Promise<void>;
+  refreshDock(): void;
+  revealDock(): void;
+  stopPlank(): Promise<void>;
+  restartPlank(): Promise<void>;
+  reportDockSize(width: number, height: number): void;
 }

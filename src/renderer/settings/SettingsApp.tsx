@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { WIDGETS, type WidgetId } from '../../shared/widgets';
 import { AppearanceTab } from './AppearanceTab';
+import { DockTab } from './DockTab';
 import { GeneralTab } from './GeneralTab';
 import { Sidebar, type SettingsTab } from './Sidebar';
 import { useSettings } from './useSettings';
@@ -38,6 +39,8 @@ export function SettingsApp() {
           />
         ) : tab === 'widgets' ? (
           <WidgetsTab snapshot={snapshot} controller={controller} onCustomize={setCustomizing} />
+        ) : tab === 'dock' ? (
+          <DockTab snapshot={snapshot} controller={controller} />
         ) : tab === 'appearance' ? (
           <AppearanceTab snapshot={snapshot} controller={controller} />
         ) : (
