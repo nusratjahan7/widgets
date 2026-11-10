@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { PanelUseRequest } from '../../../shared/clipboard-panel/types';
+import { CategoryPills } from '../CategoryPills';
 import { emojiGroups, searchEmoji, SKIN_TONES, withSkinTone, type Emoji, type SkinTone } from '../data/emoji';
 import { useGridNav } from '../useGridNav';
+
+const emojiCategoryItems = emojiGroups.map((group) => ({ id: group.name, label: group.name }));
 
 interface EmojiTabProps {
   query: string;
@@ -60,19 +63,12 @@ export function EmojiTab({ query, onUse }: EmojiTabProps) {
       </div>
 
       {!searching && (
-        <div className="cp-pills">
-          {emojiGroups.map((group, index) => (
-            <button
-              key={group.name}
-              type="button"
-              className="cp-pill"
-              data-active={index === category}
-              onClick={() => setCategory(index)}
-            >
-              {group.name}
-            </button>
-          ))}
-        </div>
+        <CategoryPills
+          items={emojiCategoryItems}
+          active={category}
+          label="Emoji categories"
+          onSelect={setCategory}
+        />
       )}
 
       <div className="cp-scroll">

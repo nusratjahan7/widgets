@@ -1,7 +1,7 @@
 {
   "name": "desktop-widgets",
   "productName": "Widgets",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "private": true,
   "description": "Frameless X11 desktop widgets: clock, date, calendar, system stats, weather, reminders, and a Win+V clipboard panel.",
   "author": {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { PanelUseRequest } from '../../../shared/clipboard-panel/types';
+import { CategoryPills } from '../CategoryPills';
 import data from '../data/symbols.json';
 import { useGridNav } from '../useGridNav';
 
@@ -40,19 +41,12 @@ export function SymbolsTab({ onUse }: SymbolsTabProps) {
         <span className="cp-count">{items.length} symbols</span>
       </div>
 
-      <div className="cp-pills">
-        {groups.map((entry, index) => (
-          <button
-            key={entry.id}
-            type="button"
-            className="cp-pill"
-            data-active={index === category}
-            onClick={() => setCategory(index)}
-          >
-            {entry.label}
-          </button>
-        ))}
-      </div>
+      <CategoryPills
+        items={groups}
+        active={category}
+        label="Symbol categories"
+        onSelect={setCategory}
+      />
 
       <div className="cp-scroll">
         <div ref={containerRef} className="cp-grid cp-grid-symbol">

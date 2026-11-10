@@ -211,12 +211,27 @@ body[data-window="clipboard-panel"] {
   gap: 4px;
   flex: none;
   overflow-x: auto;
-  padding-bottom: 2px;
-  scrollbar-width: none;
+  padding-bottom: 3px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--fg) 22%, transparent) transparent;
 }
 
 .cp-pills::-webkit-scrollbar {
-  display: none;
+  height: 5px;
+}
+
+.cp-pills::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cp-pills::-webkit-scrollbar-thumb {
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg) 22%, transparent);
+}
+
+.cp-pills::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--fg) 34%, transparent);
 }
 
 .cp-pill {
@@ -234,6 +249,12 @@ body[data-window="clipboard-panel"] {
 
 .cp-pill:hover {
   color: var(--fg);
+}
+
+.cp-pill:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
 }
 
 .cp-pill[data-active="true"] {

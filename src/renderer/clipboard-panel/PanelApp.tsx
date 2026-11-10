@@ -63,6 +63,14 @@ export function PanelApp() {
       }
 
       if (event.key === 'Tab') {
+        const pills = document.querySelector<HTMLElement>('.cp-pills');
+        const activePill = pills?.querySelector<HTMLElement>('.cp-pill[data-active="true"]');
+        if (!event.shiftKey && pills && activePill && !pills.contains(document.activeElement)) {
+          event.preventDefault();
+          activePill.focus();
+          return;
+        }
+
         event.preventDefault();
         const index = TAB_ORDER.indexOf(tab);
         const delta = event.shiftKey ? -1 : 1;
