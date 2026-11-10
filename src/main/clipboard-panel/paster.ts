@@ -21,7 +21,9 @@ export async function detectPasteTool(force = false): Promise<PasteTool> {
   if (!force && cached !== undefined) return cached;
 
   if (sessionIsX11()) {
-    cached = (await commandExists('xdotool')) ? 'xdotool' : null;
+    if (await commandExists('xdotool')) cached = 'xdotool';
+    else if (await commandExists('ydotool')) cached = 'ydotool';
+    else cached = null;
   } else if (await commandExists('wtype')) {
     cached = 'wtype';
   } else if (await commandExists('ydotool')) {

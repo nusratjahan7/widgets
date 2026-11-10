@@ -98,7 +98,8 @@
         "libsecret-1-0",
         "libayatana-appindicator3-1",
         "wmctrl",
-        "x11-utils"
+        "x11-utils",
+        "xdotool"
       ]
     },
     "win": {

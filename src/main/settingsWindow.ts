@@ -1,7 +1,10 @@
 import { BrowserWindow, nativeTheme } from 'electron';
 import path from 'node:path';
-import { DEV_SERVER_URL, PRELOAD_PATH, RENDERER_DIR } from './paths.js';
+import { IPC } from '../shared/ipc.js';
 import { isQuitting } from './appState.js';
+import { isAutostartEnabled } from './autolaunch.js';
+import { DEV_SERVER_URL, PRELOAD_PATH, RENDERER_DIR } from './paths.js';
+import { getSettings, store } from './settings.js';
 
 const SETTINGS_PATH = path.join(RENDERER_DIR, 'settings.html');
 
@@ -65,7 +68,23 @@ function ensureWindow(): BrowserWindow {
   return settingsWindow;
 }
 
+/** Keeps the stored flag in step with the actual XDG entry, which may have been removed. */
+function syncAutostartState(): void {
+  const actual = isAutostartEnabled();
+  if (getSettings().autostart === actual) return;
+
+  store.set('autostart', actual);
+  const win = getSettingsWindow();
+  if (win) {
+    win.webContents.send(IPC.settingsSnapshot, {
+      settings: getSettings(),
+      resolvedTheme: nativeTheme.shouldUseDarkColors ? 'dark' : 'light',
+    });
+  }
+}
+
 export function openSettings(): void {
+  syncAutostartState();
   const win = ensureWindow();
   requestShow = true;
   if (win.isMinimized()) win.restore();

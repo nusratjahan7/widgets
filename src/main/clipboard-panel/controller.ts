@@ -1,4 +1,4 @@
-import { BrowserWindow, ClipboardItem, clipboard, screen } from 'electron';
+import { BrowserWindow, ClipboardItem, clipboard, Notification, screen } from 'electron';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { IPC } from '../../shared/ipc.js';
@@ -24,6 +24,11 @@ const PANEL_HEIGHT = 460;
 const EDGE = 8;
 const CURSOR_GAP = 12;
 const BLUR_GRACE_MS = 150;
+const FOCUS_RETURN_MS = 140;
+const PASTE_DELAY_MS = 100;
+
+/** Linux ignores skipTaskbar; an EWMH toolbar window is what stays out of the dock. */
+const PANEL_WINDOW_TYPE = process.platform === 'linux' ? 'toolbar' : 'utility';
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -59,7 +64,12 @@ export class ClipboardPanelController {
     if (this.started) return;
     this.started = true;
 
-    await detectPasteTool();
+    const tool = await detectPasteTool();
+    if (!tool) {
+      console.warn(
+        '[clipboard-panel] no paste tool found — install xdotool (X11) or wtype/ydotool (Wayland); auto-paste will copy only',
+      );
+    }
     history.reconcileMedia();
     if (this.settings.historyEnabled) this.watcher.start();
   }
@@ -104,6 +114,8 @@ export class ClipboardPanelController {
     this.position(win);
     this.shownAt = Date.now();
 
+    // Re-assert on every show: some window managers drop the hint between shows.
+    win.setSkipTaskbar(true);
     win.setAlwaysOnTop(true, 'pop-up-menu');
     win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     win.show();
@@ -133,17 +145,27 @@ export class ClipboardPanelController {
     const win = this.win;
     if (!win || win.isDestroyed()) return;
 
-    const bounds = win.getBounds();
     const nextX = this.drag.origin.x + Math.round(screenX - this.drag.start.x);
     const nextY = this.drag.origin.y + Math.round(screenY - this.drag.start.y);
     const area = screen.getDisplayNearestPoint({
-      x: nextX + Math.round(bounds.width / 2),
-      y: nextY + Math.round(bounds.height / 2),
+      x: nextX + Math.round(PANEL_WIDTH / 2),
+      y: nextY + Math.round(PANEL_HEIGHT / 2),
     }).workArea;
 
-    const x = Math.min(Math.max(nextX, area.x), area.x + area.width - bounds.width);
-    const y = Math.min(Math.max(nextY, area.y), area.y + area.height - bounds.height);
-    win.setPosition(Math.round(x), Math.round(y));
+    const x = Math.round(
+      Math.min(Math.max(nextX, area.x), Math.max(area.x, area.x + area.width - PANEL_WIDTH)),
+    );
+    const y = Math.round(
+      Math.min(Math.max(nextY, area.y), Math.max(area.y, area.y + area.height - PANEL_HEIGHT)),
+    );
+
+    // On Linux fractional scaling, setPosition can grow the window on every
+    // call. Passing the fixed size with the move keeps it constant.
+    if (process.platform === 'linux') {
+      win.setBounds({ x, y, width: PANEL_WIDTH, height: PANEL_HEIGHT });
+    } else {
+      win.setPosition(x, y);
+    }
   }
 
   endDrag(): void {
@@ -172,6 +194,7 @@ export class ClipboardPanelController {
         this.hide();
         return;
       }
+      this.watcher.markWrittenText(resolved.text);
       this.watcher.suppress(hashText(resolved.text.slice(0, PANEL_LIMITS.text)));
       if (resolved.recent) recents.record(resolved.recent);
     } else {
@@ -184,26 +207,49 @@ export class ClipboardPanelController {
         return;
       }
       this.watcher.suppressImage();
+      this.watcher.markWrittenImage(resolved.hashes[0] ?? '');
       for (const hash of resolved.hashes) this.watcher.suppress(hash);
     }
 
     this.hide();
     if (!this.settings.autoPaste) return;
 
-    const tool = pasteTool();
-    if (!tool) return;
-
     this.pasting = true;
     try {
-      await sleep(60);
-      if (sessionIsX11() && this.previousWindowId) {
-        await focusWindow(this.previousWindowId);
-        await sleep(80);
+      // Give the window manager time to return focus to the previous app.
+      await sleep(FOCUS_RETURN_MS);
+
+      const tool = pasteTool();
+      if (!tool) {
+        console.warn('[clipboard-panel] no paste tool (xdotool/wtype/ydotool); copied only');
+        this.notifyCopyFallback();
+        return;
       }
-      await pasteInto(tool);
+
+      if (sessionIsX11() && this.previousWindowId) {
+        const restored = await focusWindow(this.previousWindowId);
+        if (!restored) {
+          console.warn(`[clipboard-panel] could not refocus window ${this.previousWindowId}`);
+        }
+        await sleep(PASTE_DELAY_MS);
+      }
+
+      if (!(await pasteInto(tool))) {
+        this.notifyCopyFallback();
+      }
     } finally {
       this.pasting = false;
     }
+  }
+
+  /** Visible fallback when auto-paste is unavailable: the item is already in the clipboard. */
+  private notifyCopyFallback(): void {
+    if (!Notification.isSupported()) return;
+    new Notification({
+      title: 'Copied to clipboard',
+      body: 'Auto-paste is unavailable — press Ctrl+V to paste.',
+      urgency: 'low',
+    }).show();
   }
 
   stop(): void {
@@ -296,6 +342,10 @@ export class ClipboardPanelController {
     const win = new BrowserWindow({
       width: PANEL_WIDTH,
       height: PANEL_HEIGHT,
+      minWidth: PANEL_WIDTH,
+      maxWidth: PANEL_WIDTH,
+      minHeight: PANEL_HEIGHT,
+      maxHeight: PANEL_HEIGHT,
       frame: false,
       transparent: true,
       backgroundColor: '#00000000',
@@ -305,6 +355,10 @@ export class ClipboardPanelController {
       maximizable: false,
       fullscreenable: false,
       skipTaskbar: true,
+      type: PANEL_WINDOW_TYPE,
+      // Focus is needed for search and keyboard navigation; it is handed back
+      // to the previous window before the paste keystroke is sent.
+      focusable: true,
       alwaysOnTop: true,
       acceptFirstMouse: true,
       show: false,
@@ -320,6 +374,12 @@ export class ClipboardPanelController {
 
     win.setTitle('Clipboard Panel');
     win.on('page-title-updated', (event) => event.preventDefault());
+
+    // skipTaskbar is a no-op on Linux; the toolbar type above is what removes
+    // the dock entry. Keep the call for macOS/Windows and re-assert before show.
+    win.setSkipTaskbar(true);
+    win.setMinimumSize(PANEL_WIDTH, PANEL_HEIGHT);
+    win.setMaximumSize(PANEL_WIDTH, PANEL_HEIGHT);
 
     win.setAlwaysOnTop(true, 'pop-up-menu');
     win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });

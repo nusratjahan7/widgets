@@ -22,6 +22,7 @@ const LINUX = process.platform === 'linux';
 const RENDERER_PATH = path.join(RENDERER_DIR, 'widget.html');
 
 const windows = new Map<WidgetId, BrowserWindow>();
+const dirtyWindows = new Set<WidgetId>();
 
 export function getWidgetWindow(id: WidgetId): BrowserWindow | undefined {
   return windows.get(id);
@@ -80,8 +81,8 @@ function clampToDisplay(bounds: WidgetBounds): WidgetBounds {
   const area = screen.getDisplayMatching(bounds).workArea;
   const width = Math.min(Math.max(bounds.width, 160), area.width);
   const height = Math.min(Math.max(bounds.height, 120), area.height);
-  const x = Math.min(Math.max(bounds.x, area.x - width + 80), area.x + area.width - 80);
-  const y = Math.min(Math.max(bounds.y, area.y), area.y + area.height - 80);
+  const x = Math.min(Math.max(bounds.x, area.x), Math.max(area.x, area.x + area.width - width));
+  const y = Math.min(Math.max(bounds.y, area.y), Math.max(area.y, area.y + area.height - height));
   return { x, y, width, height };
 }
 
@@ -119,10 +120,24 @@ function applyDesktopLayer(win: BrowserWindow): void {
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false });
 }
 
+/**
+ * Re-asserts the properties that make a widget behave like a desktop item.
+ * At login the window manager can miss the hints set at creation time, so this
+ * runs after every show as well as on display changes.
+ */
+function reapplyDesktopProps(win: BrowserWindow, id: WidgetId): void {
+  if (win.isDestroyed()) return;
+  win.setSkipTaskbar(true);
+  win.setAlwaysOnTop(false);
+  win.setResizable(!(getSettings().locked || getWidgetConfig(id).locked === true));
+  applyDesktopLayer(win);
+}
+
 export function createWidget(id: WidgetId): BrowserWindow {
   const existing = windows.get(id);
   if (existing && !existing.isDestroyed()) {
     existing.showInactive();
+    reapplyDesktopProps(existing, id);
     return existing;
   }
 
@@ -169,27 +184,27 @@ export function createWidget(id: WidgetId): BrowserWindow {
   win.setAlwaysOnTop(false);
 
   // Keep it pinned below the stack and on every workspace after show/hide cycles.
-  win.on('show', () => applyDesktopLayer(win));
+  win.on('show', () => reapplyDesktopProps(win, id));
 
   // Chromium inflates frameless transparent windows by a few pixels on
   // fractional X11 scaling. Persisting that startup geometry would compound on
   // every launch, so only save after the window has settled and moved for real.
   let settled = false;
-  let dirty = false;
   setTimeout(() => {
     settled = true;
   }, 1500);
 
   const persist = debounce(() => {
-    if (win.isDestroyed() || !dirty) return;
+    if (win.isDestroyed() || !dirtyWindows.has(id)) return;
     patchWidgetState(id, win.getBounds());
+    dirtyWindows.delete(id);
   }, 250);
 
   const handleGeometry = () => {
     if (!settled) return;
     // A move under fractional scaling can emit a spurious resize; don't record it.
     if (drag?.id === id || resizeState?.id === id) return;
-    dirty = true;
+    dirtyWindows.add(id);
     persist();
   };
 
@@ -200,11 +215,13 @@ export function createWidget(id: WidgetId): BrowserWindow {
   win.on('moved', handleGeometry);
   win.on('resized', handleGeometry);
   win.on('close', () => {
-    if (win.isDestroyed() || !dirty) return;
+    if (win.isDestroyed() || !dirtyWindows.has(id)) return;
     patchWidgetState(id, win.getBounds());
+    dirtyWindows.delete(id);
   });
   win.on('closed', () => {
     persist.cancel();
+    dirtyWindows.delete(id);
     windows.delete(id);
   });
 
@@ -214,15 +231,80 @@ export function createWidget(id: WidgetId): BrowserWindow {
 
   win.once('ready-to-show', () => {
     if (getSettings().widgets[id]?.visible === false) return;
+
+    // The display may have finished configuring after window creation. Clamp
+    // the saved geometry again so a resolution change never leaves it off-screen.
+    const state = readWidgetState(id);
+    if (state) {
+      const target = clampToDisplay(state);
+      const current = win.getBounds();
+      if (
+        current.x !== target.x ||
+        current.y !== target.y ||
+        current.width !== target.width ||
+        current.height !== target.height
+      ) {
+        win.setBounds(target);
+      }
+    }
+
     // The 'show' handler applies the workspace + below hints once the window
     // is mapped.
     win.showInactive();
+    reapplyDesktopProps(win, id);
   });
 
   if (DEV_SERVER_URL) void win.loadURL(`${DEV_SERVER_URL}/widget.html?widget=${id}`);
   else void win.loadFile(RENDERER_PATH, { query: { widget: id } });
 
   return win;
+}
+
+/** Clamps every widget back into the current work areas after a display change. */
+export function reclampAll(): void {
+  for (const [id, win] of windows) {
+    if (win.isDestroyed()) continue;
+    const state = readWidgetState(id);
+    if (!state) continue;
+
+    const target = clampToDisplay(state);
+    if (
+      target.x !== state.x ||
+      target.y !== state.y ||
+      target.width !== state.width ||
+      target.height !== state.height
+    ) {
+      win.setBounds(target);
+      patchWidgetState(id, target);
+      reapplyDesktopProps(win, id);
+    }
+  }
+}
+
+let displayTimer: NodeJS.Timeout | null = null;
+
+/** Re-clamps widgets when monitors are added, removed, or reconfigured. */
+export function watchDisplayChanges(): void {
+  const schedule = () => {
+    if (displayTimer) clearTimeout(displayTimer);
+    displayTimer = setTimeout(() => {
+      displayTimer = null;
+      reclampAll();
+    }, 400);
+  };
+
+  screen.on('display-added', schedule);
+  screen.on('display-removed', schedule);
+  screen.on('display-metrics-changed', schedule);
+}
+
+/** Writes any pending geometry immediately, e.g. before the app exits. */
+export function flushWidgetState(): void {
+  for (const [id, win] of windows) {
+    if (win.isDestroyed() || !dirtyWindows.has(id)) continue;
+    patchWidgetState(id, win.getBounds());
+    dirtyWindows.delete(id);
+  }
 }
 
 export function setWidgetVisible(id: WidgetId, visible: boolean): void {

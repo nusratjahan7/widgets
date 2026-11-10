@@ -13,7 +13,7 @@ export const CLIPBOARD_PANEL_DEFAULTS: ClipboardPanelSettings = {
 export const DEFAULT_SETTINGS: Settings = {
   theme: { mode: 'dark', accent: '#8b7ed6' },
   locked: false,
-  autostart: false,
+  autostart: true,
   keepDockIcon: false,
   weather: { city: '', latitude: null, longitude: null, units: 'metric' },
   clipboardPanel: CLIPBOARD_PANEL_DEFAULTS,
@@ -66,7 +66,7 @@ export function sanitizeSettings(raw: unknown): Settings {
       accent: isHexColor(theme.accent) ? theme.accent.toLowerCase() : DEFAULT_SETTINGS.theme.accent,
     },
     locked: source.locked === true,
-    autostart: source.autostart === true,
+    autostart: typeof source.autostart === 'boolean' ? source.autostart : DEFAULT_SETTINGS.autostart,
     keepDockIcon: source.keepDockIcon === true,
     weather: {
       city: typeof weather.city === 'string' ? weather.city.trim().slice(0, 120) : '',

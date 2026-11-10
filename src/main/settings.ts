@@ -31,7 +31,12 @@ function migrateLegacySettings(): void {
 
 migrateLegacySettings();
 
-export const store = new Store<Settings>({
+interface StoredSettings extends Settings {
+  /** Marks that the default-on autostart pass has already run once. */
+  autostartInitialized?: boolean;
+}
+
+export const store = new Store<StoredSettings>({
   name: 'settings',
   defaults: DEFAULT_SETTINGS,
   clearInvalidConfig: true,
@@ -47,7 +52,13 @@ export function migrateSettings(): void {
     next.widgets.dateCard = { ...dateCard, height: 320 };
   }
 
-  if (JSON.stringify(current) !== JSON.stringify(next)) store.store = next;
+  const result: StoredSettings = { ...next, autostartInitialized: true };
+  // Older builds shipped with autostart off by default and never wrote an entry.
+  // Enable it once so an upgrade actually starts the widgets at login; afterwards
+  // the user's toggle is respected.
+  if (current.autostartInitialized !== true) result.autostart = true;
+
+  if (JSON.stringify(current) !== JSON.stringify(result)) store.store = result;
 }
 
 export function getSettings(): Settings {

@@ -16,9 +16,9 @@ body[data-window="clipboard-panel"] {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--cp-border);
   border-radius: 16px;
-  background: color-mix(in srgb, var(--card) 94%, transparent);
+  background: color-mix(in srgb, var(--cp-bg) 98%, transparent);
   box-shadow:
     0 20px 52px rgba(0, 0, 0, 0.46),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -32,7 +32,7 @@ body[data-window="clipboard-panel"] {
   gap: 2px;
   flex: none;
   padding: 8px 10px 7px;
-  border-bottom: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--cp-border);
   cursor: grab;
   touch-action: none;
 }
@@ -56,7 +56,7 @@ body[data-window="clipboard-panel"] {
 
 .cp-tab:hover {
   color: var(--fg);
-  background: var(--input-bg);
+  background: var(--cp-control-bg);
 }
 
 .cp-tab[data-active="true"] {
@@ -128,7 +128,7 @@ body[data-window="clipboard-panel"] {
 
 .cp-clear {
   padding: 4px 9px;
-  border: 1px solid var(--panel-border);
+  border: 1px solid var(--cp-border);
   border-radius: 7px;
   background: transparent;
   color: var(--muted);
@@ -154,9 +154,9 @@ body[data-window="clipboard-panel"] {
   flex: none;
   height: 33px;
   padding: 0 9px;
-  border: 1px solid var(--panel-border);
+  border: 1px solid var(--cp-border);
   border-radius: 8px;
-  background: var(--input-bg);
+  background: var(--cp-control-bg);
 }
 
 .cp-search:focus-within {
@@ -202,7 +202,7 @@ body[data-window="clipboard-panel"] {
 }
 
 .cp-search-clear:hover {
-  background: var(--panel);
+  background: var(--cp-item-bg);
   color: var(--fg);
 }
 
@@ -222,7 +222,7 @@ body[data-window="clipboard-panel"] {
 .cp-pill {
   flex: none;
   padding: 4px 9px;
-  border: 1px solid var(--panel-border);
+  border: 1px solid var(--cp-border);
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
@@ -255,9 +255,9 @@ body[data-window="clipboard-panel"] {
   width: 21px;
   height: 21px;
   padding: 0;
-  border: 1px solid var(--panel-border);
+  border: 1px solid var(--cp-border);
   border-radius: 50%;
-  background: var(--input-bg);
+  background: var(--cp-control-bg);
   font-size: 11px;
   line-height: 1;
   cursor: pointer;
@@ -307,7 +307,7 @@ body[data-window="clipboard-panel"] {
 }
 
 .cp-cell:hover {
-  background: var(--input-bg);
+  background: var(--cp-control-bg);
 }
 
 .cp-cell[data-active="true"] {
@@ -346,7 +346,7 @@ body[data-window="clipboard-panel"] {
   padding: 0;
   border: 0;
   border-radius: 8px;
-  background: var(--input-bg);
+  background: var(--cp-control-bg);
   cursor: pointer;
 }
 
@@ -399,9 +399,9 @@ body[data-window="clipboard-panel"] {
   gap: 8px;
   width: 100%;
   padding: 8px;
-  border: 1px solid var(--panel-border);
+  border: 1px solid var(--cp-border);
   border-radius: 9px;
-  background: var(--input-bg);
+  background: var(--cp-item-bg);
   color: var(--fg);
   text-align: left;
   cursor: pointer;
@@ -410,7 +410,7 @@ body[data-window="clipboard-panel"] {
 .cp-item:hover,
 .cp-item[data-active="true"] {
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, var(--input-bg));
+  background: color-mix(in srgb, var(--accent) 10%, var(--cp-item-bg));
 }
 
 .cp-item-main {
@@ -436,7 +436,7 @@ body[data-window="clipboard-panel"] {
   height: 52px;
   flex: none;
   border-radius: 6px;
-  background: var(--panel);
+  background: var(--cp-control-bg);
   object-fit: cover;
 }
 
@@ -475,7 +475,7 @@ body[data-window="clipboard-panel"] {
 }
 
 .cp-icon-btn:hover {
-  background: var(--panel);
+  background: var(--cp-item-bg);
   color: var(--fg);
 }
 

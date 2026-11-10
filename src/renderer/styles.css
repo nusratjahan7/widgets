@@ -67,6 +67,10 @@
     --panel: #1b1d23;
     --panel-border: rgba(255, 255, 255, 0.08);
     --input-bg: rgba(255, 255, 255, 0.05);
+    --cp-bg: #1c1c1e;
+    --cp-item-bg: #26262a;
+    --cp-control-bg: #212124;
+    --cp-border: rgba(255, 255, 255, 0.09);
     color-scheme: dark;
   }
 
@@ -81,6 +85,10 @@
     --panel: #ffffff;
     --panel-border: rgba(0, 0, 0, 0.09);
     --input-bg: rgba(0, 0, 0, 0.04);
+    --cp-bg: #f4f4f7;
+    --cp-item-bg: #e9e9ee;
+    --cp-control-bg: #ededf1;
+    --cp-border: rgba(0, 0, 0, 0.1);
     color-scheme: light;
   }
 

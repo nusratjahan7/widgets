@@ -121,10 +121,11 @@ A Win+V-style frameless panel (about 420×460) that opens near the cursor and hi
 - Bind it to **Super+V**:
   - **GNOME**: Settings → Keyboard → Custom Shortcuts → add `desktop-widgets --toggle` on Super+V, then disable the existing “Toggle message tray” Super+V binding.
   - **KDE**: System Settings → Shortcuts → Custom → add the same command, then disable KDE's built-in clipboard Super+V action.
-- Optional helpers, detected at runtime. Without them the panel copies only:
-  - X11 paste: `sudo apt install xdotool`
+- Helpers, detected at runtime. Without a paste helper the panel copies only and shows a “press Ctrl+V” notification:
+  - X11 paste: `xdotool` (pulled in by the deb; `sudo apt install xdotool` for AppImage/dev)
   - Wayland watching: `sudo apt install wl-clipboard` (provides `wl-paste`)
   - Wayland paste: `wtype` or `ydotool`
+- The panel is an EWMH toolbar window, so it stays out of the dock/taskbar and Alt+Tab while remaining focusable for search and keyboard navigation.
 - GIFs use the Tenor API. Paste a free key from [tenor.com/google-apis](https://tenor.com/google-apis) in **Settings → Clipboard**; it is stored locally in `settings.json`. Search and trending are attributed “Powered by Tenor.”
 - Clipboard watching polls every 500 ms on X11. On Wayland it uses `wl-paste --watch` when available and falls back to polling. History keeps the 50 newest text/image items, skips duplicates, and supports pin, delete, and clear all.
 - History is local: `~/.config/Widgets/clipboard-panel.json` plus the `clipboard-panel-media/` folder for image entries. Turn off **Watch clipboard history** in Settings → Clipboard to stop recording; **Clear history** deletes it. Entries tagged by password managers (`x-kde-passwordManagerHint`) are skipped.
@@ -253,7 +254,7 @@ The Settings window is a normal window (`_NET_WM_WINDOW_TYPE_NORMAL`, `skipTaskb
 {
   "theme": { "mode": "dark", "accent": "#8b7ed6" },
   "locked": false,
-  "autostart": false,
+  "autostart": true,
   "keepDockIcon": false,
   "weather": { "city": "Dhaka, Dhaka Division", "latitude": 23.71, "longitude": 90.41, "units": "metric" },
   "clipboardPanel": { "enabled": true, "historyEnabled": true, "autoPaste": true, "tenorApiKey": "" },
@@ -276,7 +277,13 @@ The Settings window is a normal window (`_NET_WM_WINDOW_TYPE_NORMAL`, `skipTaskb
 
 ## Autostart
 
-The tray toggle writes/removes `~/.config/autostart/desktop-widgets.desktop`. In development the `Exec` line points at the local Electron binary plus this project, so autostart works before packaging too.
+The **General → Start at login** toggle writes/removes `~/.config/autostart/desktop-widgets.desktop`. It is on by default and the setting is reconciled with the actual file whenever Settings opens.
+
+- Packaged AppImage: `Exec` uses `$APPIMAGE`, the real file outside the temporary mount.
+- deb install: `Exec` uses `process.execPath`.
+- Development: `Exec` points at the local Electron binary plus this project.
+
+The entry passes `--hidden`, so signing in restores the enabled widgets at their saved positions, tray icon, and dock entry without opening Settings. Missing displays are handled by clamping saved bounds into the current work area (also re-applied when monitor metrics change).
 
 ## Weather
 

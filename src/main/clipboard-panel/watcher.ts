@@ -88,6 +88,18 @@ export class ClipboardWatcher {
     this.suppressImageUntil = Date.now() + windowMs;
   }
 
+  /** Records text the panel just wrote so polling does not treat it as a new copy. */
+  markWrittenText(text: string): void {
+    this.lastText = text.slice(0, PANEL_LIMITS.text);
+    this.lastImageHash = '';
+  }
+
+  /** Records the written image hash; re-encodes are covered by `suppressImage`. */
+  markWrittenImage(hash: string): void {
+    this.lastImageHash = hash;
+    this.lastText = '';
+  }
+
   start(): void {
     if (this.active) return;
     this.active = true;

@@ -1,10 +1,10 @@
-import { app, ipcMain, nativeTheme, powerMonitor } from 'electron';
+import { app, ipcMain, nativeTheme, powerMonitor, screen } from 'electron';
 import { isHexColor, isRecord, isSizePreset } from '../shared/config/index.js';
 import { IPC } from '../shared/ipc.js';
 import { PANEL_LIMITS } from '../shared/clipboard-panel/types.js';
 import type { ThemeSettings, WidgetUpdateResult } from '../shared/types.js';
 import { WIDGET_IDS, isWidgetId } from '../shared/widgets.js';
-import { applyAutostart } from './autolaunch.js';
+import { AUTOSTART_HIDDEN_FLAG, applyAutostart } from './autolaunch.js';
 import { openCityEditor } from './cityEditor.js';
 import {
   ClipboardPanelController,
@@ -335,7 +335,50 @@ function startLoops(): void {
   void pushWeather();
 }
 
-function start(): void {
+const DISPLAY_READY_EDGE = 200;
+const DISPLAY_SETTLE_MS = 1200;
+const DISPLAY_READY_TIMEOUT_MS = 5000;
+
+function displayReady(): boolean {
+  return screen
+    .getAllDisplays()
+    .some(({ workArea }) => workArea.width >= DISPLAY_READY_EDGE && workArea.height >= DISPLAY_READY_EDGE);
+}
+
+/**
+ * At login the panel/work area can still be configuring after app.whenReady().
+ * Wait for a usable work area, then let the layout settle before placing widgets.
+ */
+function waitForDisplayReady(): Promise<void> {
+  return new Promise((resolve) => {
+    let done = false;
+    let settle: NodeJS.Timeout | undefined;
+
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timeout);
+      if (settle) clearTimeout(settle);
+      screen.removeListener('display-added', check);
+      screen.removeListener('display-metrics-changed', check);
+      resolve();
+    };
+
+    const check = () => {
+      if (done || !displayReady()) return;
+      // Restart the settle window whenever the layout changes again.
+      if (settle) clearTimeout(settle);
+      settle = setTimeout(finish, DISPLAY_SETTLE_MS);
+    };
+
+    const timeout = setTimeout(finish, DISPLAY_READY_TIMEOUT_MS);
+    screen.on('display-added', check);
+    screen.on('display-metrics-changed', check);
+    check();
+  });
+}
+
+async function start(): Promise<void> {
   migrateSettings();
   registerIpc();
   initTheme();
@@ -343,12 +386,18 @@ function start(): void {
   ensureWeatherDefaults();
   applyAutostart(getSettings().autostart);
 
+  wm.watchDisplayChanges();
+  if (wantsHidden) await waitForDisplayReady();
+
   for (const id of WIDGET_IDS) {
     const state = getSettings().widgets[id];
     if (!state || state.visible) wm.createWidget(id);
   }
 
-  powerMonitor.on('resume', () => wm.broadcast(IPC.resume, Date.now()));
+  powerMonitor.on('resume', () => {
+    wm.reclampAll();
+    wm.broadcast(IPC.resume, Date.now());
+  });
 
   createTray();
   applyDockIcon(getSettings().keepDockIcon);
@@ -361,6 +410,7 @@ function start(): void {
 }
 
 const wantsToggle = process.argv.includes('--toggle');
+const wantsHidden = process.argv.includes(AUTOSTART_HIDDEN_FLAG);
 
 if (!app.requestSingleInstanceLock({ toggle: wantsToggle })) {
   app.quit();
@@ -370,11 +420,13 @@ if (!app.requestSingleInstanceLock({ toggle: wantsToggle })) {
       getClipboardPanel()?.toggle();
       return;
     }
+    // An autostart launch racing an existing instance must stay headless.
+    if (argv.includes(AUTOSTART_HIDDEN_FLAG)) return;
     openSettings();
   });
 
-  app.whenReady().then(() => {
-    start();
+  app.whenReady().then(async () => {
+    await start();
     if (wantsToggle) getClipboardPanel()?.toggle();
   });
 
@@ -386,6 +438,7 @@ if (!app.requestSingleInstanceLock({ toggle: wantsToggle })) {
   });
   app.on('before-quit', () => {
     markQuitting();
+    wm.flushWidgetState();
     clipboardPanel?.stop();
     setClipboardPanel(null);
     destroyDockIcon();
