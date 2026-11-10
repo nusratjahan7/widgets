@@ -64,8 +64,8 @@ export function ClipboardTab({ snapshot }: ClipboardTabProps) {
               <span className="settings-label">Panel status</span>
               <p className="settings-help">
                 Session {status?.session ?? '—'} · Watching {status?.clipboardWatch ? 'yes' : 'no'} ·
-                Auto-paste {status?.pasteTool ?? 'unavailable'} · Tenor{' '}
-                {status?.tenorConfigured ? 'configured' : 'not configured'}
+                Auto-paste {status?.pasteTool ?? 'unavailable'} · Klipy{' '}
+                {status?.klipyConfigured ? 'configured' : 'not configured'}
               </p>
             </div>
             <button

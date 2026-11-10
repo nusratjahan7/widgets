@@ -4,13 +4,14 @@ import { PANEL_LIMITS, type PanelRecentItem } from '../../shared/clipboard-panel
 import { sendToPanel } from './bridge.js';
 import { panelStore } from './history.js';
 
-const KINDS: PanelRecentItem['kind'][] = ['emoji', 'symbol', 'kaomoji'];
+const KINDS: PanelRecentItem['kind'][] = ['emoji', 'symbol', 'kaomoji', 'gif'];
 
 function sanitize(raw: unknown): PanelRecentItem | null {
   if (!isRecord(raw)) return null;
   if (typeof raw.kind !== 'string' || !(KINDS as string[]).includes(raw.kind)) return null;
 
-  const value = typeof raw.value === 'string' ? raw.value.slice(0, 64) : '';
+  const limit = raw.kind === 'gif' ? 2048 : 256;
+  const value = typeof raw.value === 'string' ? raw.value.slice(0, limit) : '';
   if (!value) return null;
 
   return {

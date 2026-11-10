@@ -25,7 +25,7 @@ export interface ClipboardImageItem {
 export type ClipboardHistoryItem = ClipboardTextItem | ClipboardImageItem;
 
 export interface PanelRecentItem {
-  kind: 'emoji' | 'symbol' | 'kaomoji';
+  kind: 'emoji' | 'symbol' | 'kaomoji' | 'gif';
   value: string;
   label: string;
   at: number;
@@ -36,7 +36,7 @@ export type PanelUseRequest =
   | { source: 'gif'; url: string; label?: string }
   | { source: 'history'; id: string };
 
-export interface TenorResult {
+export interface KlipyResult {
   id: string;
   title: string;
   previewUrl: string;
@@ -45,24 +45,24 @@ export interface TenorResult {
   height: number;
 }
 
-export interface TenorSearchResult {
+export interface KlipySearchResult {
   ok: boolean;
   error?: 'no-key' | 'network' | 'api';
-  results: TenorResult[];
+  results: KlipyResult[];
 }
 
 export interface ClipboardPanelSettings {
   enabled: boolean;
   historyEnabled: boolean;
   autoPaste: boolean;
-  tenorApiKey: string;
+  klipyApiKey: string;
 }
 
 export interface ClipboardPanelStatus {
   session: 'x11' | 'wayland' | 'other';
   pasteTool: 'xdotool' | 'wtype' | 'ydotool' | null;
   clipboardWatch: boolean;
-  tenorConfigured: boolean;
+  klipyConfigured: boolean;
 }
 
 export const PANEL_LIMITS = {
@@ -71,8 +71,8 @@ export const PANEL_LIMITS = {
   /** Keeps clipboard-panel.json small; longer text is truncated. */
   text: 20_000,
   imageBytes: 8 * 1024 * 1024,
-  tenorQuery: 100,
-  tenorKey: 200,
+  klipyQuery: 100,
+  klipyKey: 200,
 } as const;
 
 export const MEDIA_SCHEME = 'clipboard-panel-media';

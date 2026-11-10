@@ -6,6 +6,7 @@ interface RawEmoji {
   skin_tone_support?: boolean;
   name?: string;
   slug?: string;
+  emoji_version?: string;
 }
 
 interface RawGroup {
@@ -35,6 +36,18 @@ export interface SkinTone {
 const rawGroups = dataByGroup as unknown as RawGroup[];
 const rawComponents = components as unknown as Record<string, string>;
 
+/**
+ * Current color-emoji fonts (including Noto Color Emoji) ship glyphs through
+ * Emoji 16. Emoji 17 additions have no glyph yet and render as tofu boxes, so
+ * hide them until the font catches up.
+ */
+const MAX_EMOJI_VERSION = 16;
+
+function isRenderable(item: RawEmoji): boolean {
+  const version = Number.parseFloat(item.emoji_version ?? '');
+  return !Number.isFinite(version) || version <= MAX_EMOJI_VERSION;
+}
+
 function component(key: string, fallback: string): string {
   const value = rawComponents[key];
   return typeof value === 'string' && value ? value : fallback;
@@ -45,7 +58,10 @@ export const emojiGroups: EmojiGroup[] = rawGroups
   .map((group) => ({
     name: typeof group.name === 'string' && group.name ? group.name : 'Emoji',
     emojis: (group.emojis ?? [])
-      .filter((item): item is RawEmoji & { emoji: string } => typeof item.emoji === 'string')
+      .filter(
+        (item): item is RawEmoji & { emoji: string } =>
+          typeof item.emoji === 'string' && isRenderable(item),
+      )
       .map((item) => ({
         char: item.emoji,
         name: typeof item.name === 'string' ? item.name : item.emoji,

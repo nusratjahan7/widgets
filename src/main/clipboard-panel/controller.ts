@@ -177,7 +177,7 @@ export class ClipboardPanelController {
       session: sessionKind(),
       pasteTool: pasteTool(),
       clipboardWatch: this.watcher.running,
-      tenorConfigured: Boolean(this.settings.tenorApiKey),
+      klipyConfigured: Boolean(this.settings.klipyApiKey),
     };
   }
 
@@ -286,7 +286,19 @@ export class ClipboardPanelController {
     if (request.source === 'gif') {
       const url = typeof request.url === 'string' ? request.url.slice(0, 2048) : '';
       if (!/^https?:\/\//i.test(url)) return null;
-      return { kind: 'text', text: url };
+      return {
+        kind: 'text',
+        text: url,
+        recent: {
+          kind: 'gif',
+          value: url,
+          label:
+            typeof request.label === 'string' && request.label.trim()
+              ? request.label.slice(0, 120)
+              : 'GIF',
+          at: Date.now(),
+        },
+      };
     }
 
     if (request.source === 'history') {

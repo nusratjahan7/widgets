@@ -87,8 +87,8 @@ export function PanelApp() {
                 ref={searchRef}
                 value={query}
                 spellCheck={false}
-                aria-label={tab === 'emoji' ? 'Search emoji' : 'Search Tenor'}
-                placeholder={tab === 'emoji' ? 'Search emoji' : 'Search Tenor'}
+                aria-label={tab === 'emoji' ? 'Search emoji' : 'Search KLIPY'}
+                placeholder={tab === 'emoji' ? 'Search emoji' : 'Search KLIPY'}
                 onChange={(event) => setQuery(event.target.value)}
               />
               {query && (

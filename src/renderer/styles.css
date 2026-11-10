@@ -52,6 +52,7 @@
   --font-sans: "Noto Sans", "DejaVu Sans", system-ui, sans-serif;
   --font-mono: "DejaVu Sans Mono", "Noto Sans Mono", ui-monospace, monospace;
   --font-script: "Z003", "URW Chancery L", cursive;
+  --font-emoji: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", "Twemoji Mozilla", sans-serif;
 }
 
 @layer base {

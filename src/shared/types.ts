@@ -5,7 +5,7 @@ import type {
   ClipboardPanelStatus,
   PanelRecentItem,
   PanelUseRequest,
-  TenorSearchResult,
+  KlipySearchResult,
 } from './clipboard-panel/types.js';
 import type { WidgetId } from './widgets.js';
 
@@ -182,5 +182,5 @@ export interface WidgetApi {
   useClipboardPanelItem(request: PanelUseRequest): Promise<void>;
   getPanelRecents(): Promise<PanelRecentItem[]>;
   onPanelRecents(callback: (items: PanelRecentItem[]) => void): () => void;
-  searchTenor(query: string): Promise<TenorSearchResult>;
+  searchKlipy(query: string): Promise<KlipySearchResult>;
 }

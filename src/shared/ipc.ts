@@ -47,7 +47,7 @@ export const IPC = {
   panelHistoryDelete: 'panel:history-delete',
   panelHistoryClear: 'panel:history-clear',
   panelHistoryPin: 'panel:history-pin',
-  panelTenor: 'panel:tenor',
+  panelKlipy: 'panel:klipy',
 } as const;
 
 export type IpcChannels = typeof IPC;

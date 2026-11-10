@@ -7,7 +7,7 @@ export const CLIPBOARD_PANEL_DEFAULTS: ClipboardPanelSettings = {
   enabled: true,
   historyEnabled: true,
   autoPaste: true,
-  tenorApiKey: '',
+  klipyApiKey: '',
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -78,9 +78,9 @@ export function sanitizeSettings(raw: unknown): Settings {
       enabled: clipboardPanel.enabled !== false,
       historyEnabled: clipboardPanel.historyEnabled !== false,
       autoPaste: clipboardPanel.autoPaste !== false,
-      tenorApiKey:
-        typeof clipboardPanel.tenorApiKey === 'string'
-          ? clipboardPanel.tenorApiKey.trim().slice(0, 200)
+      klipyApiKey:
+        typeof clipboardPanel.klipyApiKey === 'string'
+          ? clipboardPanel.klipyApiKey.trim().slice(0, 200)
           : '',
     },
     widgets: nextWidgets,

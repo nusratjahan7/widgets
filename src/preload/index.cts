@@ -19,7 +19,7 @@ import type {
   ClipboardPanelStatus,
   PanelRecentItem,
   PanelUseRequest,
-  TenorSearchResult,
+  KlipySearchResult,
 } from '../shared/clipboard-panel/types.js';
 import type { WidgetId } from '../shared/widgets.js';
 
@@ -73,7 +73,7 @@ const CHANNELS = {
   panelHistoryDelete: 'panel:history-delete',
   panelHistoryClear: 'panel:history-clear',
   panelHistoryPin: 'panel:history-pin',
-  panelTenor: 'panel:tenor',
+  panelKlipy: 'panel:klipy',
 } as const satisfies IpcChannels;
 
 function subscribe<T>(channel: string, callback: (payload: T) => void): () => void {
@@ -146,8 +146,8 @@ const api: WidgetApi = {
     ipcRenderer.invoke(CHANNELS.panelUseItem, request) as Promise<void>,
   getPanelRecents: () => ipcRenderer.invoke(CHANNELS.panelRecentsGet) as Promise<PanelRecentItem[]>,
   onPanelRecents: (callback) => subscribe<PanelRecentItem[]>(CHANNELS.panelRecents, callback),
-  searchTenor: (query: string) =>
-    ipcRenderer.invoke(CHANNELS.panelTenor, query) as Promise<TenorSearchResult>,
+  searchKlipy: (query: string) =>
+    ipcRenderer.invoke(CHANNELS.panelKlipy, query) as Promise<KlipySearchResult>,
 };
 
 contextBridge.exposeInMainWorld('widgets', api);

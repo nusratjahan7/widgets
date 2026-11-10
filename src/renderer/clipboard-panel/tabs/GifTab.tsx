@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { PanelUseRequest, TenorResult } from '../../../shared/clipboard-panel/types';
+import type { KlipyResult, PanelUseRequest } from '../../../shared/clipboard-panel/types';
 import { useGridNav } from '../useGridNav';
 
 type LoadState = 'loading' | 'ready' | 'no-key' | 'error';
@@ -10,9 +10,9 @@ interface GifTabProps {
 }
 
 export function GifTab({ query, onUse }: GifTabProps) {
-  const [results, setResults] = useState<TenorResult[]>([]);
+  const [results, setResults] = useState<KlipyResult[]>([]);
   const [state, setState] = useState<LoadState>('loading');
-  const [error, setError] = useState('Could not reach Tenor.');
+  const [error, setError] = useState('Could not reach Klipy.');
 
   useEffect(() => {
     let alive = true;
@@ -20,7 +20,7 @@ export function GifTab({ query, onUse }: GifTabProps) {
 
     const timer = setTimeout(() => {
       window.widgets
-        .searchTenor(query)
+        .searchKlipy(query)
         .then((result) => {
           if (!alive) return;
 
@@ -31,8 +31,8 @@ export function GifTab({ query, onUse }: GifTabProps) {
             } else {
               setError(
                 result.error === 'network'
-                  ? 'Could not reach Tenor. Check the connection.'
-                  : 'Tenor returned an error. Check the API key.',
+                  ? 'Could not reach Klipy. Check the connection.'
+                  : 'Klipy returned an error. Check the API key.',
               );
               setState('error');
             }
@@ -45,7 +45,7 @@ export function GifTab({ query, onUse }: GifTabProps) {
         .catch(() => {
           if (!alive) return;
           setResults([]);
-          setError('Could not reach Tenor.');
+          setError('Could not reach Klipy.');
           setState('error');
         });
     }, 300);
@@ -79,7 +79,7 @@ export function GifTab({ query, onUse }: GifTabProps) {
       <div className="cp-scroll">
         {state === 'no-key' && (
           <div className="cp-notice">
-            Add a Tenor API key in <strong>Settings → Clipboard</strong> to browse and search GIFs.
+            Add a Klipy API key in <strong>Settings → Clipboard</strong> to browse and search GIFs.
           </div>
         )}
 
@@ -114,7 +114,7 @@ export function GifTab({ query, onUse }: GifTabProps) {
       </div>
 
       <div className="cp-footer">
-        <span>Powered by Tenor</span>
+        <span>Powered by KLIPY</span>
         <span>URL copied</span>
       </div>
     </>

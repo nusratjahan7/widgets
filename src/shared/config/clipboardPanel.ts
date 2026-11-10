@@ -33,12 +33,12 @@ export const clipboardPanelConfig: ConfigField[] = [
     default: CLIPBOARD_PANEL_DEFAULTS.autoPaste,
   },
   {
-    key: 'tenorApiKey',
-    label: 'Tenor API key',
+    key: 'klipyApiKey',
+    label: 'Klipy API key',
     description:
-      'Enables GIF trending and search. Create a key at tenor.com/google-apis. Stored locally in settings.json.',
+      'Enables GIF trending and search via Klipy. Get a free test key at partner.klipy.com/api-keys. Stored locally in settings.json.',
     type: 'text',
-    default: CLIPBOARD_PANEL_DEFAULTS.tenorApiKey,
-    placeholder: 'Paste your Tenor API key',
+    default: CLIPBOARD_PANEL_DEFAULTS.klipyApiKey,
+    placeholder: 'Paste your Klipy API key',
   },
 ];

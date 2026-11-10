@@ -15,7 +15,7 @@ import {
 } from './clipboard-panel/index.js';
 import * as clipboardHistory from './clipboard-panel/history.js';
 import * as clipboardRecents from './clipboard-panel/recents.js';
-import { searchTenor } from './clipboard-panel/tenor.js';
+import { searchKlipy } from './clipboard-panel/klipy.js';
 import {
   getSettings,
   mergeWidgetConfig,
@@ -78,10 +78,10 @@ function applySettingsPatch(raw: unknown): void {
       historyEnabled:
         typeof panel.historyEnabled === 'boolean' ? panel.historyEnabled : current.historyEnabled,
       autoPaste: typeof panel.autoPaste === 'boolean' ? panel.autoPaste : current.autoPaste,
-      tenorApiKey:
-        typeof panel.tenorApiKey === 'string'
-          ? panel.tenorApiKey.trim().slice(0, PANEL_LIMITS.tenorKey)
-          : current.tenorApiKey,
+      klipyApiKey:
+        typeof panel.klipyApiKey === 'string'
+          ? panel.klipyApiKey.trim().slice(0, PANEL_LIMITS.klipyKey)
+          : current.klipyApiKey,
     };
     store.set('clipboardPanel', merged);
     clipboardPanel?.applySettings(merged);
@@ -297,7 +297,7 @@ function registerIpc(): void {
         session: 'other',
         pasteTool: null,
         clipboardWatch: false,
-        tenorConfigured: Boolean(getSettings().clipboardPanel.tenorApiKey),
+        klipyConfigured: Boolean(getSettings().clipboardPanel.klipyApiKey),
       }
     );
   });
@@ -316,8 +316,8 @@ function registerIpc(): void {
 
   ipcMain.handle(IPC.panelUseItem, (_event, payload: unknown) => clipboardPanel?.useItem(payload));
 
-  ipcMain.handle(IPC.panelTenor, (_event, query: unknown) =>
-    searchTenor(typeof query === 'string' ? query : '', getSettings().clipboardPanel.tenorApiKey),
+  ipcMain.handle(IPC.panelKlipy, (_event, query: unknown) =>
+    searchKlipy(typeof query === 'string' ? query : '', getSettings().clipboardPanel.klipyApiKey),
   );
 }
 

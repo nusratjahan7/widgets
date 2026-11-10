@@ -258,7 +258,9 @@ body[data-window="clipboard-panel"] {
   border: 1px solid var(--cp-border);
   border-radius: 50%;
   background: var(--cp-control-bg);
+  font-family: var(--font-emoji);
   font-size: 11px;
+  font-variant-emoji: emoji;
   line-height: 1;
   cursor: pointer;
 }
@@ -295,6 +297,82 @@ body[data-window="clipboard-panel"] {
   gap: 6px;
 }
 
+.cp-recent {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cp-recent-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cp-recent-heading {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cp-recent-grid {
+  display: grid;
+  gap: 4px;
+}
+
+.cp-recent-cell {
+  overflow: hidden;
+}
+
+.cp-recent-section[data-kind="emoji"] .cp-recent-grid,
+.cp-recent-section[data-kind="symbol"] .cp-recent-grid {
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+
+.cp-recent-section[data-kind="emoji"] .cp-recent-cell,
+.cp-recent-section[data-kind="symbol"] .cp-recent-cell {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+
+.cp-recent-section[data-kind="kaomoji"] .cp-recent-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cp-recent-section[data-kind="kaomoji"] .cp-recent-cell {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 6px;
+  line-height: 40px;
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cp-recent-section[data-kind="gif"] .cp-recent-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.cp-recent-section[data-kind="gif"] .cp-recent-cell {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.cp-scroll-recent {
+  scrollbar-width: thin;
+}
+
+.cp-scroll-recent::-webkit-scrollbar {
+  width: 6px;
+}
+
 .cp-cell {
   display: grid;
   place-items: center;
@@ -318,7 +396,9 @@ body[data-window="clipboard-panel"] {
 .cp-emoji {
   width: 100%;
   height: 40px;
+  font-family: var(--font-emoji);
   font-size: 22px;
+  font-variant-emoji: emoji;
   line-height: 1;
 }
 
