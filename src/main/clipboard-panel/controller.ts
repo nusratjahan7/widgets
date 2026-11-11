@@ -11,7 +11,7 @@ import {
   type PanelUseRequest,
 } from '../../shared/clipboard-panel/types.js';
 import { DEV_SERVER_URL, PRELOAD_PATH, RENDERER_DIR } from '../paths.js';
-import { activeWindow, focusWindow, sessionIsX11 } from '../x11.js';
+import { sessionIsX11 } from '../x11.js';
 import { setPanelWindow, sendToPanel } from './bridge.js';
 import * as history from './history.js';
 import * as recents from './recents.js';
@@ -24,11 +24,17 @@ const PANEL_HEIGHT = 460;
 const EDGE = 8;
 const CURSOR_GAP = 12;
 const BLUR_GRACE_MS = 150;
-const FOCUS_RETURN_MS = 140;
-const PASTE_DELAY_MS = 100;
+const PASTE_DELAY_MS = 120;
 
-/** Linux ignores skipTaskbar; an EWMH toolbar window is what stays out of the dock. */
-const PANEL_WINDOW_TYPE = process.platform === 'linux' ? 'toolbar' : 'utility';
+const ON_LINUX = process.platform === 'linux';
+
+/**
+ * A notification-type window is kept out of the taskbar/pager and never treated
+ * as a normal app window. That matters on Cinnamon: docks with "intelligent"
+ * hiding reveal themselves whenever the active application has no window
+ * overlapping them, so on Linux the panel must never become the active window.
+ */
+const PANEL_WINDOW_TYPE = ON_LINUX ? 'notification' : 'utility';
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -45,7 +51,6 @@ export class ClipboardPanelController {
   private win: BrowserWindow | null = null;
   private settings: ClipboardPanelSettings;
   private readonly watcher: ClipboardWatcher;
-  private previousWindowId: number | null = null;
   private shownAt = 0;
   private lastHiddenAt = 0;
   private pasting = false;
@@ -101,25 +106,21 @@ export class ClipboardPanelController {
 
     const win = this.ensureWindow();
 
-    if (sessionIsX11()) {
-      try {
-        this.previousWindowId = await activeWindow();
-      } catch {
-        this.previousWindowId = null;
-      }
-    } else {
-      this.previousWindowId = null;
-    }
-
     this.position(win);
     this.shownAt = Date.now();
 
     // Re-assert on every show: some window managers drop the hint between shows.
     win.setSkipTaskbar(true);
-    win.setAlwaysOnTop(true, 'pop-up-menu');
-    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-    win.show();
-    win.focus();
+
+    if (ON_LINUX) {
+      // Never activate the panel. `show()`/`focus()` make the Widgets process the
+      // active application, which makes Cinnamon docks (Plank intellihide, auto-
+      // hidden panels) pop up because no app window overlaps them.
+      win.showInactive();
+    } else {
+      win.show();
+      win.focus();
+    }
 
     sendToPanel(IPC.panelShown);
     sendToPanel(IPC.panelHistory, history.list());
@@ -216,22 +217,15 @@ export class ClipboardPanelController {
 
     this.pasting = true;
     try {
-      // Give the window manager time to return focus to the previous app.
-      await sleep(FOCUS_RETURN_MS);
+      // On Linux the panel never took focus, so the target window is still
+      // active. Give it a moment, then paste without refocusing anything.
+      await sleep(PASTE_DELAY_MS);
 
       const tool = pasteTool();
       if (!tool) {
         console.warn('[clipboard-panel] no paste tool (xdotool/wtype/ydotool); copied only');
         this.notifyCopyFallback();
         return;
-      }
-
-      if (sessionIsX11() && this.previousWindowId) {
-        const restored = await focusWindow(this.previousWindowId);
-        if (!restored) {
-          console.warn(`[clipboard-panel] could not refocus window ${this.previousWindowId}`);
-        }
-        await sleep(PASTE_DELAY_MS);
       }
 
       if (!(await pasteInto(tool))) {
@@ -368,9 +362,10 @@ export class ClipboardPanelController {
       fullscreenable: false,
       skipTaskbar: true,
       type: PANEL_WINDOW_TYPE,
-      // Focus is needed for search and keyboard navigation; it is handed back
-      // to the previous window before the paste keystroke is sent.
-      focusable: true,
+      // On Linux, never take keyboard focus: focusing makes this app the active
+      // window and reveals Cinnamon's auto-hidden dock/panel. The target window
+      // therefore keeps focus and Ctrl+V lands in the right place.
+      focusable: !ON_LINUX,
       alwaysOnTop: true,
       acceptFirstMouse: true,
       show: false,
@@ -387,8 +382,7 @@ export class ClipboardPanelController {
     win.setTitle('Clipboard Panel');
     win.on('page-title-updated', (event) => event.preventDefault());
 
-    // skipTaskbar is a no-op on Linux; the toolbar type above is what removes
-    // the dock entry. Keep the call for macOS/Windows and re-assert before show.
+    // Re-asserted before every show as well; some window managers drop it.
     win.setSkipTaskbar(true);
     win.setMinimumSize(PANEL_WIDTH, PANEL_HEIGHT);
     win.setMaximumSize(PANEL_WIDTH, PANEL_HEIGHT);

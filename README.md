@@ -115,7 +115,7 @@ Release CI fetches Electron and the electron-builder tools from mirrors (`ELECTR
 
 ## Clipboard panel
 
-A Win+V-style frameless panel (about 420×460) that opens near the cursor and hides on blur or Esc. Drag the tab bar to move it. Six tabs: **Recent**, **Emoji**, **GIF**, **Kaomoji**, **Symbols**, and **Clipboard history**. Selecting an item copies it, hides the panel, and — when a paste helper is available — pastes it into the window that was focused before.
+A Win+V-style frameless panel (about 420×460) that opens near the cursor and hides when you pick an item, click its close button, or toggle it again. Drag the tab bar to move it. Six tabs: **Recent**, **Emoji**, **GIF**, **Kaomoji**, **Symbols**, and **Clipboard history**. Selecting an item copies it, hides the panel, and — when a paste helper is available — pastes it into the window that was focused before.
 
 > **GIFs are powered by Klipy.** Get a free test key at [partner.klipy.com/api-keys](https://partner.klipy.com/api-keys) and paste it in **Settings → Clipboard**. The key is stored locally in `settings.json`. Klipy replaced Tenor, which Google discontinued on June 30, 2026.
 
@@ -127,10 +127,11 @@ A Win+V-style frameless panel (about 420×460) that opens near the cursor and hi
   - X11 paste: `xdotool` (pulled in by the deb; `sudo apt install xdotool` for AppImage/dev)
   - Wayland watching: `sudo apt install wl-clipboard` (provides `wl-paste`)
   - Wayland paste: `wtype` or `ydotool`
-- The panel is an EWMH toolbar window, so it stays out of the dock/taskbar and Alt+Tab while remaining focusable for search and keyboard navigation.
+- On Linux the panel is an EWMH notification window, so it stays out of the dock/taskbar and Alt+Tab. It is also deliberately non-focusable: focusing it makes the app the active window, and a Cinnamon dock or panel using intelligent hiding (Plank, auto-hidden panels) reveals itself whenever the active app has no window overlapping it. Because the window you were in keeps focus, `xdotool` sends Ctrl+V to the right place without refocusing.
+- On macOS and Windows the panel takes focus for search and keyboard navigation.
 - Clipboard watching polls every 500 ms on X11. On Wayland it uses `wl-paste --watch` when available and falls back to polling. History keeps the 50 newest text/image items, skips duplicates, and supports pin, delete, and clear all.
 - History is local: `~/.config/Widgets/clipboard-panel.json` plus the `clipboard-panel-media/` folder for image entries. Turn off **Watch clipboard history** in Settings → Clipboard to stop recording; **Clear history** deletes it. Entries tagged by password managers (`x-kde-passwordManagerHint`) are skipped.
-- Keyboard: arrows move the selection, Enter copies the selected item, Tab/Shift+Tab switch tabs, and Esc clears a search or closes the panel.
+- Keyboard (macOS/Windows, where the panel takes focus): arrows move the selection, Enter copies the selected item, Tab/Shift+Tab switch tabs, and Esc clears a search or closes the panel. On Linux the panel never takes focus, so use the mouse and the close button.
 
 ## Settings window
 
